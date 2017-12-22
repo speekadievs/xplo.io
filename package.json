@@ -34,6 +34,7 @@
     "collect.js": "^3.0.51",
     "fs": "0.0.1-security",
     "jquery": "^3.2.1",
-    "popper.js": "^1.12.9"
+    "popper.js": "^1.12.9",
+    "socket.io": "^2.0.4"
   }
 }

@@ -12,5 +12,8 @@
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('index');
 });
+
+Route::post('login', 'Auth/LoginController@login')->name('login');
+Route::post('logout', 'Auth/LoginController@logout')->name('logout');
