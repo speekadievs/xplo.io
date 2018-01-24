@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Laravel : Admin</title>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
+
+</head>
+<body>
+
+<div id="home" class="container h-100" style="display:none">
+    <div class="row h-100">
+        <div class="col-md-8 offset-md-2 block align-self-center">
+            <div id="connecting" class="text-center">
+                <i class="fa fa-refresh fa-spin fa-3x"></i>
+                <h2>Connecting...</h2>
+            </div>
+            <div id="login" style="display:none">
+                <div class="logo text-center">
+                    <img src="/images/logo.png" class="img-fluid">
+                </div>
+                <div class="col-md-6 offset-md-3">
+                    <div class="form-group">
+                        <input id="username" type="text" class="form-control form-control-lg" placeholder="Username...">
+                    </div>
+                    <div class="form-group text-center">
+                        <button id="play-button" type="button" class="btn btn-primary" style="width:150px">
+                            Play Game
+                        </button>
+                    </div>
+                    <div class="form-group text-center">
+                        <ul class="list-unstyled">
+                            <li><strong>W</strong> - Launch a grenade</li>
+                            <li><strong>Space</strong> - Drop a mine</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div id="dead" class="text-center" style="display:none">
+                <div class="form-group" style="padding: 80px 0">
+                    <h2>Oh no, you exploded!</h2>
+                </div>
+                <div class="form-group">
+                    <button id="play-again-button" type="button" class="btn btn-primary" style="width:150px">
+                        Play Again
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 offset-md-2 block align-self-end" style="margin-bottom:10px;">
+            <div class="row">
+                <div class="col block">
+                    <a href='http://play.google.com/store/?pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'>
+                        <img alt='Get it on Google Play' src='/images/google-badge.png' style="width:200px"/>
+                    </a>
+                </div>
+                <div class="col block">
+                    <ul class="list-inline text-right" style="margin-top:25px">
+                        <li class="list-inline-item align-middle">
+                            <a href="#">About</a>
+                        </li>
+                        <li class="list-inline-item align-middle">
+                            <a href="#">Contacts</a>
+                        </li>
+                        <li class="list-inline-item align-middle">
+                            <a href="http://iogames.space" target="_blank">More IO Games</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="game" style="display:none"></div>
+
+</body>
+
+<script src="js/lib/phaser.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/app.js"></script>
+
+
+</html>
