@@ -204,6 +204,10 @@ class GameService {
             return false;
         }
 
+        if (!player) {
+            return false;
+        }
+
         let socket = this.io.sockets.connected[player.id];
 
         if (object.type !== 'mine' && object.type !== 'grenade') {
@@ -305,7 +309,8 @@ class FoodObject {
         this.body = new p2.Body({
             mass: 0,
             position: [this.x, this.y],
-            fixedRotation: true
+            fixedRotation: true,
+            collisionResponse: false
         });
 
         this.body.addShape(new p2.Circle({
@@ -316,6 +321,9 @@ class FoodObject {
             id: this.id,
             type: this.type
         };
+
+        this.body.gravityScale = 0;
+        this.body.shapes[0].sensor = true;
 
         if (typeof this.user_id !== 'undefined') {
             this.body.game.user_id = this.user_id;
@@ -474,6 +482,9 @@ io.sockets.on('connection', function (socket) {
             type: newPlayer.type
         };
 
+        newPlayer.playerBody.gravityScale = 0;
+        newPlayer.playerBody.shapes[0].sensor = true;
+
         world.addBody(newPlayer.playerBody);
 
         console.log("created new player with id " + this.id);
@@ -544,8 +555,6 @@ io.sockets.on('connection', function (socket) {
         let movePlayer = game.findPlayer(this.id, this.room);
 
         if (!movePlayer || movePlayer.dead) {
-            console.log('no player');
-
             return false;
         }
 

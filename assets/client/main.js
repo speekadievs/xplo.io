@@ -27,7 +27,7 @@ socket.on("connected", function () {
     };
 
     BlankStage.prototype = {
-        create: function() {
+        create: function () {
             game.properties.in_game = false;
         }
     };
@@ -59,7 +59,7 @@ socket.on("connected", function () {
         create: function () {
             //game.stage.backgroundColor = 0xE1A193;;
 
-            game.started = true;
+
 
             // keep the spacebar from propogating up to the browser
             this.game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);
@@ -68,68 +68,72 @@ socket.on("connected", function () {
 
             game.onConnected();
 
-            //listen for main player creation
-            socket.on("create-player", function (data) {
-                game.createPlayer(data);
-            });
+            if(!game.started){
+                game.started = true;
 
-            //listen to new enemy connections
-            socket.on("new-enemy", function (data) {
-                game.newEnemy(data);
-            });
+                //listen for main player creation
+                socket.on("create-player", function (data) {
+                    game.createPlayer(data);
+                });
 
-            //listen to enemy movement
-            socket.on("enemy-move", function (data) {
-                game.onEnemyMove(data);
-            });
+                //listen to new enemy connections
+                socket.on("new-enemy", function (data) {
+                    game.newEnemy(data);
+                });
 
-            //when received remove_player, remove the player passed;
-            socket.on('remove-player', function (data) {
-                game.onRemovePlayer(data);
-            });
+                //listen to enemy movement
+                socket.on("enemy-move", function (data) {
+                    game.onEnemyMove(data);
+                });
 
-            //when the player receives the new input
-            socket.on('input-received', function (data) {
-                game.onInputReceived(data);
-            });
+                //when received remove_player, remove the player passed;
+                socket.on('remove-player', function (data) {
+                    game.onRemovePlayer(data);
+                });
 
-            //when the player gets killed
-            socket.on('killed', function (data) {
-                game.onKilled()
-            });
+                //when the player receives the new input
+                socket.on('input-received', function (data) {
+                    game.onInputReceived(data);
+                });
 
-            //when the player gains in size
-            socket.on('gained', function (data) {
-                game.onGained(data);
-            });
+                //when the player gets killed
+                socket.on('killed', function (data) {
+                    game.onKilled()
+                });
 
-            //when the player picks up a mine
-            socket.on('mine-picked-up', function (data) {
-                game.onMinePickedUp(data);
-            });
+                //when the player gains in size
+                socket.on('gained', function (data) {
+                    game.onGained(data);
+                });
 
-            //when the player picks up a grenade
-            socket.on('grenade-picked-up', function (data) {
-                game.onGrenadePickedUp(data);
-            });
+                //when the player picks up a mine
+                socket.on('mine-picked-up', function (data) {
+                    game.onMinePickedUp(data);
+                });
 
-            // check for item removal
-            socket.on('item-remove', function (data) {
-                game.onItemRemove(data);
-            });
+                //when the player picks up a grenade
+                socket.on('grenade-picked-up', function (data) {
+                    game.onGrenadePickedUp(data);
+                });
 
-            // check for item update
-            socket.on('item-update', function (data) {
-                game.onItemUpdate(data);
-            });
+                // check for item removal
+                socket.on('item-remove', function (data) {
+                    game.onItemRemove(data);
+                });
 
-            socket.on('mine-update', function (data) {
-                game.onMineUpdate(data);
-            });
+                // check for item update
+                socket.on('item-update', function (data) {
+                    game.onItemUpdate(data);
+                });
 
-            socket.on('explosion', function (data) {
-                game.onExplosion(data);
-            });
+                socket.on('mine-update', function (data) {
+                    game.onMineUpdate(data);
+                });
+
+                socket.on('explosion', function (data) {
+                    game.onExplosion(data);
+                });
+            }
         },
 
         update: function () {
@@ -194,20 +198,21 @@ socket.on("connected", function () {
     };
 
     jQuery(document).on('click', '#play-button', function () {
+        let gameElement = jQuery('#game');
+
         jQuery('#home').fadeOut();
-        jQuery('#game').fadeIn();
+        gameElement.fadeIn();
 
         if (!game.started) {
             engine.state.add('BlankStage', BlankStage);
             engine.state.add('MainStage', MainStage);
             engine.state.start('MainStage');
         } else {
-            console.log('WAAAAT');
-            engine.state.start('MainStage', true, true);
+            engine.state.start('MainStage', true);
         }
 
-        jQuery('#game').find('canvas').attr('width', (window.innerWidth * window.devicePixelRatio));
-        jQuery('#game').find('canvas').attr('height', (window.innerHeight * window.devicePixelRatio));
+        gameElement.find('canvas').attr('width', (window.innerWidth * window.devicePixelRatio))
+            .attr('height', (window.innerHeight * window.devicePixelRatio));
     });
 
     jQuery(document).on('click', '#play-again-button', function () {

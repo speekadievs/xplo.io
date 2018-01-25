@@ -137,7 +137,6 @@ socket.on("connected", function () {
         create: function create() {
             //game.stage.backgroundColor = 0xE1A193;;
 
-            game.started = true;
 
             // keep the spacebar from propogating up to the browser
             this.game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);
@@ -146,68 +145,72 @@ socket.on("connected", function () {
 
             game.onConnected();
 
-            //listen for main player creation
-            socket.on("create-player", function (data) {
-                game.createPlayer(data);
-            });
+            if (!game.started) {
+                game.started = true;
 
-            //listen to new enemy connections
-            socket.on("new-enemy", function (data) {
-                game.newEnemy(data);
-            });
+                //listen for main player creation
+                socket.on("create-player", function (data) {
+                    game.createPlayer(data);
+                });
 
-            //listen to enemy movement
-            socket.on("enemy-move", function (data) {
-                game.onEnemyMove(data);
-            });
+                //listen to new enemy connections
+                socket.on("new-enemy", function (data) {
+                    game.newEnemy(data);
+                });
 
-            //when received remove_player, remove the player passed;
-            socket.on('remove-player', function (data) {
-                game.onRemovePlayer(data);
-            });
+                //listen to enemy movement
+                socket.on("enemy-move", function (data) {
+                    game.onEnemyMove(data);
+                });
 
-            //when the player receives the new input
-            socket.on('input-received', function (data) {
-                game.onInputReceived(data);
-            });
+                //when received remove_player, remove the player passed;
+                socket.on('remove-player', function (data) {
+                    game.onRemovePlayer(data);
+                });
 
-            //when the player gets killed
-            socket.on('killed', function (data) {
-                game.onKilled();
-            });
+                //when the player receives the new input
+                socket.on('input-received', function (data) {
+                    game.onInputReceived(data);
+                });
 
-            //when the player gains in size
-            socket.on('gained', function (data) {
-                game.onGained(data);
-            });
+                //when the player gets killed
+                socket.on('killed', function (data) {
+                    game.onKilled();
+                });
 
-            //when the player picks up a mine
-            socket.on('mine-picked-up', function (data) {
-                game.onMinePickedUp(data);
-            });
+                //when the player gains in size
+                socket.on('gained', function (data) {
+                    game.onGained(data);
+                });
 
-            //when the player picks up a grenade
-            socket.on('grenade-picked-up', function (data) {
-                game.onGrenadePickedUp(data);
-            });
+                //when the player picks up a mine
+                socket.on('mine-picked-up', function (data) {
+                    game.onMinePickedUp(data);
+                });
 
-            // check for item removal
-            socket.on('item-remove', function (data) {
-                game.onItemRemove(data);
-            });
+                //when the player picks up a grenade
+                socket.on('grenade-picked-up', function (data) {
+                    game.onGrenadePickedUp(data);
+                });
 
-            // check for item update
-            socket.on('item-update', function (data) {
-                game.onItemUpdate(data);
-            });
+                // check for item removal
+                socket.on('item-remove', function (data) {
+                    game.onItemRemove(data);
+                });
 
-            socket.on('mine-update', function (data) {
-                game.onMineUpdate(data);
-            });
+                // check for item update
+                socket.on('item-update', function (data) {
+                    game.onItemUpdate(data);
+                });
 
-            socket.on('explosion', function (data) {
-                game.onExplosion(data);
-            });
+                socket.on('mine-update', function (data) {
+                    game.onMineUpdate(data);
+                });
+
+                socket.on('explosion', function (data) {
+                    game.onExplosion(data);
+                });
+            }
         },
 
         update: function update() {
@@ -272,20 +275,20 @@ socket.on("connected", function () {
     };
 
     jQuery(document).on('click', '#play-button', function () {
+        var gameElement = jQuery('#game');
+
         jQuery('#home').fadeOut();
-        jQuery('#game').fadeIn();
+        gameElement.fadeIn();
 
         if (!game.started) {
             engine.state.add('BlankStage', BlankStage);
             engine.state.add('MainStage', MainStage);
             engine.state.start('MainStage');
         } else {
-            console.log('WAAAAT');
-            engine.state.start('MainStage', true, true);
+            engine.state.start('MainStage', true);
         }
 
-        jQuery('#game').find('canvas').attr('width', window.innerWidth * window.devicePixelRatio);
-        jQuery('#game').find('canvas').attr('height', window.innerHeight * window.devicePixelRatio);
+        gameElement.find('canvas').attr('width', window.innerWidth * window.devicePixelRatio).attr('height', window.innerHeight * window.devicePixelRatio);
     });
 
     jQuery(document).on('click', '#play-again-button', function () {
@@ -10838,8 +10841,6 @@ var GameService = function () {
     }, {
         key: 'onEnemyMove',
         value: function onEnemyMove(data) {
-            console.log("moving enemy");
-
             var movePlayer = this.findPlayer(data.id);
 
             if (!movePlayer) {
@@ -10857,7 +10858,19 @@ var GameService = function () {
             if (data.shield !== movePlayer.player.shield) {
                 movePlayer.player.shield = data.shield;
 
-                movePlayer.player.graphicsData[0].lineWidth = data.shield;
+                var sizeChange = setInterval(function () {
+                    if (movePlayer) {
+                        if (movePlayer.graphicsData) {
+                            if (movePlayer.graphicsData[0].lineWidth > data.shield) {
+                                movePlayer.graphicsData[0].lineWidth--;
+                            } else if (movePlayer.graphicsData[0].lineWidth < data.shield) {
+                                movePlayer.graphicsData[0].lineWidth++;
+                            } else {
+                                clearInterval(sizeChange);
+                            }
+                        }
+                    }
+                }, 1);
 
                 movePlayer.player.body.clearShapes();
                 movePlayer.player.body.addCircle(data.size + data.shield / 2, 0, 0);
@@ -10900,12 +10913,16 @@ var GameService = function () {
             //let new_scale = data.new_size / player.initial_size;
 
             var sizeChange = setInterval(function () {
-                if (player.graphicsData[0].lineWidth > data.new_shield) {
-                    player.graphicsData[0].lineWidth--;
-                } else if (player.graphicsData[0].lineWidth < data.new_shield) {
-                    player.graphicsData[0].lineWidth++;
-                } else {
-                    clearInterval(sizeChange);
+                if (player) {
+                    if (player.graphicsData) {
+                        if (player.graphicsData[0].lineWidth > data.new_shield) {
+                            player.graphicsData[0].lineWidth--;
+                        } else if (player.graphicsData[0].lineWidth < data.new_shield) {
+                            player.graphicsData[0].lineWidth++;
+                        } else {
+                            clearInterval(sizeChange);
+                        }
+                    }
                 }
             }, 1);
 
@@ -11003,8 +11020,9 @@ var GameService = function () {
                 player.destroy();
 
                 setTimeout(function () {
-                    _this.properties.in_game = false;
-                    _this.engine.state.start('BlankStage', true, true);
+                    _this.restart();
+
+                    _this.engine.state.start('BlankStage', true);
 
                     jQuery('#game').fadeOut();
                     jQuery('#home').fadeIn();
@@ -11012,6 +11030,37 @@ var GameService = function () {
                     jQuery('#dead').fadeIn();
                 }, 1000);
             }
+        }
+    }, {
+        key: 'restart',
+        value: function restart() {
+            this.properties.in_game = false;
+
+            this.enemies.forEach(function (enemy) {
+                enemy.player.destroy();
+            });
+
+            this.enemies = [];
+
+            this.food_list.forEach(function (item) {
+                item.item.destroy();
+            });
+            this.food_list = [];
+
+            this.mine_list.forEach(function (item) {
+                item.item.destroy();
+            });
+            this.mine_list = [];
+
+            this.grenade_list = [];
+
+            this.leaderboard.destroy();
+            this.shield_box.destroy();
+            this.mine_box.destroy();
+            this.grenade_box.destroy();
+
+            this.can_drop = true;
+            this.can_launch = true;
         }
     }]);
 

@@ -255,8 +255,6 @@ class GameService {
     }
 
     onEnemyMove(data) {
-        console.log("moving enemy");
-
         let movePlayer = this.findPlayer(data.id);
 
         if (!movePlayer) {
@@ -274,7 +272,19 @@ class GameService {
         if (data.shield !== movePlayer.player.shield) {
             movePlayer.player.shield = data.shield;
 
-            movePlayer.player.graphicsData[0].lineWidth = data.shield;
+            let sizeChange = setInterval(() => {
+                if (movePlayer) {
+                    if (movePlayer.graphicsData) {
+                        if (movePlayer.graphicsData[0].lineWidth > data.shield) {
+                            movePlayer.graphicsData[0].lineWidth--;
+                        } else if (movePlayer.graphicsData[0].lineWidth < data.shield) {
+                            movePlayer.graphicsData[0].lineWidth++;
+                        } else {
+                            clearInterval(sizeChange);
+                        }
+                    }
+                }
+            }, 1);
 
             movePlayer.player.body.clearShapes();
             movePlayer.player.body.addCircle((data.size + (data.shield / 2)), 0, 0);
@@ -315,12 +325,16 @@ class GameService {
         //let new_scale = data.new_size / player.initial_size;
 
         let sizeChange = setInterval(() => {
-            if (player.graphicsData[0].lineWidth > data.new_shield) {
-                player.graphicsData[0].lineWidth--;
-            } else if (player.graphicsData[0].lineWidth < data.new_shield) {
-                player.graphicsData[0].lineWidth++;
-            } else {
-                clearInterval(sizeChange);
+            if (player) {
+                if (player.graphicsData) {
+                    if (player.graphicsData[0].lineWidth > data.new_shield) {
+                        player.graphicsData[0].lineWidth--;
+                    } else if (player.graphicsData[0].lineWidth < data.new_shield) {
+                        player.graphicsData[0].lineWidth++;
+                    } else {
+                        clearInterval(sizeChange);
+                    }
+                }
             }
         }, 1);
 
@@ -388,7 +402,7 @@ class GameService {
     }
 
     onRemovePlayer(data) {
-        if(data.id === player.id){
+        if (data.id === player.id) {
             return false;
         }
 
@@ -408,8 +422,9 @@ class GameService {
             player.destroy();
 
             setTimeout(() => {
-                this.properties.in_game = false;
-                this.engine.state.start('BlankStage', true, true);
+                this.restart();
+
+                this.engine.state.start('BlankStage', true);
 
                 jQuery('#game').fadeOut();
                 jQuery('#home').fadeIn();
@@ -417,6 +432,36 @@ class GameService {
                 jQuery('#dead').fadeIn();
             }, 1000);
         }
+    }
+
+    restart() {
+        this.properties.in_game = false;
+
+        this.enemies.forEach(enemy => {
+            enemy.player.destroy();
+        });
+
+        this.enemies = [];
+
+        this.food_list.forEach(item => {
+            item.item.destroy();
+        });
+        this.food_list = [];
+
+        this.mine_list.forEach(item => {
+            item.item.destroy();
+        });
+        this.mine_list = [];
+
+        this.grenade_list = [];
+
+        this.leaderboard.destroy();
+        this.shield_box.destroy();
+        this.mine_box.destroy();
+        this.grenade_box.destroy();
+
+        this.can_drop = true;
+        this.can_launch = true;
     }
 }
 
