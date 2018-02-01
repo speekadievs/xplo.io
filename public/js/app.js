@@ -222,6 +222,10 @@ socket.on("connected", function () {
                 socket.on('explosion', function (data) {
                     game.onExplosion(data);
                 });
+
+                socket.on('get-leaderboard', function (data) {
+                    game.onGetLeaderboard(data);
+                });
             }
         },
 
@@ -249,8 +253,8 @@ socket.on("connected", function () {
                 }
 
                 // add keyboard controls
-                this.spaceKey = game.engine.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-                if (this.spaceKey.isDown) {
+                this.wKey = game.engine.input.keyboard.addKey(Phaser.Keyboard.W);
+                if (this.wKey.isDown) {
                     if (game.can_drop) {
                         if (player.mines.length) {
                             var mine = player.mines[0];
@@ -272,8 +276,8 @@ socket.on("connected", function () {
                     game.can_drop = true;
                 }
 
-                this.wKey = game.engine.input.keyboard.addKey(Phaser.Keyboard.W);
-                if (this.wKey.isDown) {
+                this.spaceKey = game.engine.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+                if (this.spaceKey.isDown) {
                     if (game.can_launch) {
                         if (player.grenades.length) {
                             var grenade = player.grenades[0];
@@ -318,7 +322,7 @@ socket.on("connected", function () {
 
     jQuery(document).on('click', '#play-again-button', function () {
         jQuery('#home').fadeIn();
-        jQuery('#dead').fadeOut();
+        jQuery('#dead').hide();
         jQuery('#login').fadeIn();
     });
 
@@ -10660,6 +10664,8 @@ var GameService = function () {
 
         this.can_drop = true;
         this.can_launch = true;
+
+        this.leaderboard_interval = null;
     }
 
     _createClass(GameService, [{
@@ -10721,6 +10727,8 @@ var GameService = function () {
     }, {
         key: 'createPlayer',
         value: function createPlayer(data) {
+            var _this = this;
+
             console.log(data.x, data.y);
             player = this.engine.add.graphics(data.x, data.y);
             player.radius = data.size;
@@ -10851,6 +10859,217 @@ var GameService = function () {
             this.grenade_box.text.setTextBounds(0, 0, 71, 71);
             this.grenade_box.text.boundsAlignV = 'middle';
             this.grenade_box.text.boundsAlignH = 'center';
+
+            this.createLeaderboard(data);
+
+            this.socket.emit('get-leaderboard');
+            this.leaderboard_interval = setInterval(function () {
+                _this.socket.emit('get-leaderboard');
+            }, 2000);
+        }
+    }, {
+        key: 'createLeaderboard',
+        value: function createLeaderboard(data) {
+
+            /**
+             * LINE 1
+             */
+
+            this.leaderboard.line_1_left = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_1_left.setTextBounds(10, 40, 180, 20);
+            this.leaderboard.line_1_left.boundsAlignH = 'left';
+
+            this.leaderboard.line_1_right = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_1_right.setTextBounds(10, 40, 180, 20);
+            this.leaderboard.line_1_right.boundsAlignH = 'right';
+
+            /**
+             * LINE 2
+             */
+
+            this.leaderboard.line_2_left = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_2_left.setTextBounds(10, 60, 180, 20);
+            this.leaderboard.line_2_left.boundsAlignH = 'left';
+
+            this.leaderboard.line_2_right = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_2_right.setTextBounds(10, 60, 180, 20);
+            this.leaderboard.line_2_right.boundsAlignH = 'right';
+
+            /**
+             * LINE 3
+             */
+
+            this.leaderboard.line_3_left = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_3_left.setTextBounds(10, 80, 180, 20);
+            this.leaderboard.line_3_left.boundsAlignH = 'left';
+
+            this.leaderboard.line_3_right = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_3_right.setTextBounds(10, 80, 180, 20);
+            this.leaderboard.line_3_right.boundsAlignH = 'right';
+
+            /**
+             * LINE 4
+             */
+
+            this.leaderboard.line_4_left = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_4_left.setTextBounds(10, 100, 180, 20);
+            this.leaderboard.line_4_left.boundsAlignH = 'left';
+
+            this.leaderboard.line_4_right = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_4_right.setTextBounds(10, 100, 180, 20);
+            this.leaderboard.line_4_right.boundsAlignH = 'right';
+
+            /**
+             * LINE 5
+             */
+
+            this.leaderboard.line_5_left = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_5_left.setTextBounds(10, 120, 180, 20);
+            this.leaderboard.line_5_left.boundsAlignH = 'left';
+
+            this.leaderboard.line_5_right = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_5_right.setTextBounds(10, 120, 180, 20);
+            this.leaderboard.line_5_right.boundsAlignH = 'right';
+
+            /**
+             * LINE 6
+             */
+
+            this.leaderboard.line_6_left = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_6_left.setTextBounds(10, 140, 180, 20);
+            this.leaderboard.line_6_left.boundsAlignH = 'left';
+
+            this.leaderboard.line_6_right = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_6_right.setTextBounds(10, 140, 180, 20);
+            this.leaderboard.line_6_right.boundsAlignH = 'right';
+
+            /**
+             * LINE 7
+             */
+
+            this.leaderboard.line_7_left = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_7_left.setTextBounds(10, 160, 180, 20);
+            this.leaderboard.line_7_left.boundsAlignH = 'left';
+
+            this.leaderboard.line_7_right = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_7_right.setTextBounds(10, 160, 180, 20);
+            this.leaderboard.line_7_right.boundsAlignH = 'right';
+
+            /**
+             * LINE 8
+             */
+
+            this.leaderboard.line_8_left = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_8_left.setTextBounds(10, 180, 180, 20);
+            this.leaderboard.line_8_left.boundsAlignH = 'left';
+
+            this.leaderboard.line_8_right = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_8_right.setTextBounds(10, 180, 180, 20);
+            this.leaderboard.line_8_right.boundsAlignH = 'right';
+
+            /**
+             * LINE 9
+             */
+
+            this.leaderboard.line_9_left = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_9_left.setTextBounds(10, 200, 180, 20);
+            this.leaderboard.line_9_left.boundsAlignH = 'left';
+
+            this.leaderboard.line_9_right = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_9_right.setTextBounds(10, 200, 180, 20);
+            this.leaderboard.line_9_right.boundsAlignH = 'right';
+
+            /**
+             * LINE 10
+             */
+
+            this.leaderboard.line_10_left = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_10_left.setTextBounds(10, 220, 180, 20);
+            this.leaderboard.line_10_left.boundsAlignH = 'left';
+
+            this.leaderboard.line_10_right = this.engine.add.text(0, 0, '', {
+                font: "12px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.line_10_right.setTextBounds(10, 220, 180, 20);
+            this.leaderboard.line_10_right.boundsAlignH = 'right';
         }
     }, {
         key: 'newEnemy',
@@ -10923,7 +11142,7 @@ var GameService = function () {
             if (data.shield !== movePlayer.player.shield) {
                 movePlayer.player.shield = data.shield;
 
-                movePlayer.graphicsData[0].lineWidth = data.shield;
+                movePlayer.player.graphicsData[0].lineWidth = data.shield;
 
                 movePlayer.player.body.clearShapes();
                 movePlayer.player.body.addCircle(movePlayer.player.size + data.shield / 2, 0, 0);
@@ -11030,10 +11249,10 @@ var GameService = function () {
     }, {
         key: 'onMineUpdate',
         value: function onMineUpdate(data) {
-            var _this = this;
+            var _this2 = this;
 
             data.forEach(function (mine) {
-                _this.mine_list.push(new MineObject(mine.id, mine.x, mine.y, mine.color, mine.size, mine.line_size, mine.user_id, _this.engine));
+                _this2.mine_list.push(new MineObject(mine.id, mine.x, mine.y, mine.color, mine.size, mine.line_size, mine.user_id, _this2.engine));
             });
         }
     }, {
@@ -11054,10 +11273,10 @@ var GameService = function () {
     }, {
         key: 'onGrenadeUpdate',
         value: function onGrenadeUpdate(data) {
-            var _this2 = this;
+            var _this3 = this;
 
             data.forEach(function (grenade) {
-                _this2.grenade_list.push(new GrenadeObject(grenade.id, grenade.x, grenade.y, grenade.color, grenade.size, grenade.line_size, grenade.user_id, _this2.engine));
+                _this3.grenade_list.push(new GrenadeObject(grenade.id, grenade.x, grenade.y, grenade.color, grenade.size, grenade.line_size, grenade.user_id, _this3.engine));
             });
         }
     }, {
@@ -11084,10 +11303,10 @@ var GameService = function () {
     }, {
         key: 'onItemUpdate',
         value: function onItemUpdate(data) {
-            var _this3 = this;
+            var _this4 = this;
 
             data.forEach(function (item) {
-                _this3.food_list.push(new FoodObject(item.id, item.type, item.x, item.y, item.color, item.size, item.line_size, _this3));
+                _this4.food_list.push(new FoodObject(item.id, item.type, item.x, item.y, item.color, item.size, item.line_size, _this4));
             });
         }
     }, {
@@ -11123,17 +11342,36 @@ var GameService = function () {
             this.enemies.splice(this.enemies.indexOf(removePlayer), 1);
         }
     }, {
+        key: 'onGetLeaderboard',
+        value: function onGetLeaderboard(data) {
+            var _this5 = this;
+
+            for (var i = 0; i < 10; i++) {
+                this.leaderboard['line_' + (i + 1) + '_left'].setText('');
+                this.leaderboard['line_' + (i + 1) + '_right'].setText('');
+            }
+
+            data.leaders.forEach(function (leader, key) {
+                if (leader.username.length > 17) {
+                    leader.username = leader.username.substring(0, 17) + '...';
+                }
+
+                _this5.leaderboard['line_' + (key + 1) + '_left'].setText(key + 1 + ': ' + leader.username);
+                _this5.leaderboard['line_' + (key + 1) + '_right'].setText(leader.score);
+            });
+        }
+    }, {
         key: 'onKilled',
         value: function onKilled() {
-            var _this4 = this;
+            var _this6 = this;
 
             if (player) {
                 player.destroy();
 
                 setTimeout(function () {
-                    _this4.restart();
+                    _this6.restart();
 
-                    _this4.engine.state.start('BlankStage', true);
+                    _this6.engine.state.start('BlankStage', true);
 
                     jQuery('#game').fadeOut();
                     jQuery('#home').fadeIn();
@@ -11163,6 +11401,9 @@ var GameService = function () {
             });
             this.mine_list = [];
 
+            this.grenade_list.forEach(function (item) {
+                item.item.destroy();
+            });
             this.grenade_list = [];
 
             this.leaderboard.destroy();
@@ -11172,6 +11413,8 @@ var GameService = function () {
 
             this.can_drop = true;
             this.can_launch = true;
+
+            clearInterval(this.leaderboard_interval);
         }
     }]);
 
@@ -11396,6 +11639,9 @@ var MineObject = function MineObject(id, startx, starty, color, size, line_size,
     graphics.lineStyle(line_size, color, 0.5);
     graphics.drawCircle(0, 0, size);
     graphics.endFill();
+    graphics.beginFill(0xff0000);
+    graphics.drawCircle(0, 0, 5);
+    graphics.endFill();
     graphics.anchor.setTo(0.5, 0.5);
 
     this.item = engine.add.sprite(this.posx, this.posy, graphics.generateTexture());
@@ -11451,6 +11697,9 @@ var GrenadeObject = function GrenadeObject(id, startx, starty, color, size, line
     graphics.beginFill(color);
     graphics.lineStyle(line_size, color, 0.5);
     graphics.drawCircle(0, 0, size);
+    graphics.endFill();
+    graphics.beginFill(0xff0000);
+    graphics.drawCircle(0, 0, 5);
     graphics.endFill();
     graphics.anchor.setTo(0.5, 0.5);
 

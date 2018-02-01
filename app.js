@@ -1,3 +1,5 @@
+let _ = require('lodash');
+
 let express = require('express');
 let bodyParser = require('body-parser');
 
@@ -23,7 +25,7 @@ app.use('/js', express.static(__dirname + '/public/js'));
 app.use('/images', express.static(__dirname + '/public/images'));
 app.use('/css', express.static(__dirname + '/public/css'));
 
-app.post('/send/feedback', function(request, response){
+app.post('/send/feedback', function (request, response) {
     console.log(request.body.type);
     console.log(request.body.content);
 });
@@ -292,11 +294,9 @@ class GameService {
 
         if (object.type !== 'mine' && object.type !== 'grenade') {
             if (object.type === 'shield-pickup') {
-                if (player.shield >= this.properties.max_shield) {
-                    return false;
+                if (player.shield < this.properties.max_shield) {
+                    player.shield += 1;
                 }
-
-                player.shield += 1;
 
                 socket.emit("gained", {
                     new_size: player.size,
@@ -350,7 +350,9 @@ class GameService {
                     id: player.id
                 });
 
-                socket.emit("killed");
+                socket.emit("killed", {
+                    start_time: player.start_time
+                });
 
                 if (killer) {
                     killer.score = killer.score + 50;
@@ -713,6 +715,11 @@ io.sockets.on('connection', function (socket) {
 
     socket.on('drop-mine', function (data) {
         let player = game.findPlayer(this.id);
+
+        if (!player) {
+            return false;
+        }
+
         let mine = player.findMine(data.id);
 
         if (!mine) {
@@ -723,9 +730,9 @@ io.sockets.on('connection', function (socket) {
 
         mine.x = player.x;
         mine.y = player.y;
-        mine.color = 0xff0000;
-        mine.size = 30;
-        mine.line_size = 20;
+        mine.color = game.properties.mine_color;
+        mine.size = 25;
+        mine.line_size = 15;
         mine.type = 'mine';
         mine.dropped = (new Date()).getTime();
 
@@ -746,6 +753,11 @@ io.sockets.on('connection', function (socket) {
 
     socket.on('throw-grenade', function (data) {
         let player = game.findPlayer(this.id);
+
+        if (!player) {
+            return false;
+        }
+
         let grenade = player.findGrenade(data.id);
 
         if (!grenade) {
@@ -756,9 +768,9 @@ io.sockets.on('connection', function (socket) {
 
         grenade.x = player.x;
         grenade.y = player.y;
-        grenade.color = 0xff0000;
-        grenade.size = 30;
-        grenade.line_size = 20;
+        grenade.color = game.properties.grenade_color;
+        grenade.size = 25;
+        grenade.line_size = 15;
         grenade.type = 'grenade';
         grenade.meta = {
             start: (new Date()).getTime(),
@@ -781,6 +793,24 @@ io.sockets.on('connection', function (socket) {
         this.emit('grenade-update', [grenade]);
 
         game.moving_grenades.push(grenade.id);
+    });
+
+    socket.on('get-leaderboard', function () {
+        let sortedPlayers = _.orderBy(game.player_list, ['score'], ['desc']);
+        let leaders = [];
+
+        for (let i = 0; i < 10; i++) {
+            if (typeof sortedPlayers[i] !== 'undefined') {
+                leaders.push({
+                    username: sortedPlayers[i].username ? sortedPlayers[i].username : 'Unnamed Player',
+                    score: sortedPlayers[i].score
+                });
+            }
+        }
+
+        this.emit('get-leaderboard', {
+            leaders: leaders
+        });
     });
 });
 

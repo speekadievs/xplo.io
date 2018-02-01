@@ -17,6 +17,9 @@ class GrenadeObject {
         graphics.lineStyle(line_size, color, 0.5);
         graphics.drawCircle(0, 0, size);
         graphics.endFill();
+        graphics.beginFill(0xff0000);
+        graphics.drawCircle(0, 0, 5);
+        graphics.endFill();
         graphics.anchor.setTo(0.5, 0.5);
 
         this.item = engine.add.sprite(this.posx, this.posy, graphics.generateTexture());

@@ -30,6 +30,8 @@ class GameService {
 
         this.can_drop = true;
         this.can_launch = true;
+
+        this.leaderboard_interval = null;
     }
 
     onConnected() {
@@ -217,6 +219,216 @@ class GameService {
         this.grenade_box.text.setTextBounds(0, 0, 71, 71);
         this.grenade_box.text.boundsAlignV = 'middle';
         this.grenade_box.text.boundsAlignH = 'center';
+
+        this.createLeaderboard(data);
+
+        this.socket.emit('get-leaderboard');
+        this.leaderboard_interval = setInterval(() => {
+            this.socket.emit('get-leaderboard');
+        }, 2000);
+    }
+
+    createLeaderboard(data) {
+
+        /**
+         * LINE 1
+         */
+
+        this.leaderboard.line_1_left = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_1_left.setTextBounds(10, 40, 180, 20);
+        this.leaderboard.line_1_left.boundsAlignH = 'left';
+
+        this.leaderboard.line_1_right = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_1_right.setTextBounds(10, 40, 180, 20);
+        this.leaderboard.line_1_right.boundsAlignH = 'right';
+
+        /**
+         * LINE 2
+         */
+
+        this.leaderboard.line_2_left = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_2_left.setTextBounds(10, 60, 180, 20);
+        this.leaderboard.line_2_left.boundsAlignH = 'left';
+
+        this.leaderboard.line_2_right = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_2_right.setTextBounds(10, 60, 180, 20);
+        this.leaderboard.line_2_right.boundsAlignH = 'right';
+
+        /**
+         * LINE 3
+         */
+
+        this.leaderboard.line_3_left = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_3_left.setTextBounds(10, 80, 180, 20);
+        this.leaderboard.line_3_left.boundsAlignH = 'left';
+
+        this.leaderboard.line_3_right = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_3_right.setTextBounds(10, 80, 180, 20);
+        this.leaderboard.line_3_right.boundsAlignH = 'right';
+
+        /**
+         * LINE 4
+         */
+
+        this.leaderboard.line_4_left = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_4_left.setTextBounds(10, 100, 180, 20);
+        this.leaderboard.line_4_left.boundsAlignH = 'left';
+
+        this.leaderboard.line_4_right = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_4_right.setTextBounds(10, 100, 180, 20);
+        this.leaderboard.line_4_right.boundsAlignH = 'right';
+
+        /**
+         * LINE 5
+         */
+
+        this.leaderboard.line_5_left = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_5_left.setTextBounds(10, 120, 180, 20);
+        this.leaderboard.line_5_left.boundsAlignH = 'left';
+
+        this.leaderboard.line_5_right = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_5_right.setTextBounds(10, 120, 180, 20);
+        this.leaderboard.line_5_right.boundsAlignH = 'right';
+
+        /**
+         * LINE 6
+         */
+
+        this.leaderboard.line_6_left = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_6_left.setTextBounds(10, 140, 180, 20);
+        this.leaderboard.line_6_left.boundsAlignH = 'left';
+
+        this.leaderboard.line_6_right = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_6_right.setTextBounds(10, 140, 180, 20);
+        this.leaderboard.line_6_right.boundsAlignH = 'right';
+
+        /**
+         * LINE 7
+         */
+
+        this.leaderboard.line_7_left = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_7_left.setTextBounds(10, 160, 180, 20);
+        this.leaderboard.line_7_left.boundsAlignH = 'left';
+
+        this.leaderboard.line_7_right = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_7_right.setTextBounds(10, 160, 180, 20);
+        this.leaderboard.line_7_right.boundsAlignH = 'right';
+
+        /**
+         * LINE 8
+         */
+
+        this.leaderboard.line_8_left = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_8_left.setTextBounds(10, 180, 180, 20);
+        this.leaderboard.line_8_left.boundsAlignH = 'left';
+
+        this.leaderboard.line_8_right = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_8_right.setTextBounds(10, 180, 180, 20);
+        this.leaderboard.line_8_right.boundsAlignH = 'right';
+
+        /**
+         * LINE 9
+         */
+
+        this.leaderboard.line_9_left = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_9_left.setTextBounds(10, 200, 180, 20);
+        this.leaderboard.line_9_left.boundsAlignH = 'left';
+
+        this.leaderboard.line_9_right = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_9_right.setTextBounds(10, 200, 180, 20);
+        this.leaderboard.line_9_right.boundsAlignH = 'right';
+
+        /**
+         * LINE 10
+         */
+
+        this.leaderboard.line_10_left = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_10_left.setTextBounds(10, 220, 180, 20);
+        this.leaderboard.line_10_left.boundsAlignH = 'left';
+
+        this.leaderboard.line_10_right = this.engine.add.text(0, 0, '', {
+            font: "12px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.leaderboard);
+        this.leaderboard.line_10_right.setTextBounds(10, 220, 180, 20);
+        this.leaderboard.line_10_right.boundsAlignH = 'right';
     }
 
     newEnemy(data) {
@@ -283,7 +495,7 @@ class GameService {
         if (data.shield !== movePlayer.player.shield) {
             movePlayer.player.shield = data.shield;
 
-            movePlayer.graphicsData[0].lineWidth = data.shield;
+            movePlayer.player.graphicsData[0].lineWidth = data.shield;
 
             movePlayer.player.body.clearShapes();
             movePlayer.player.body.addCircle((movePlayer.player.size + (data.shield / 2)), 0, 0);
@@ -466,6 +678,22 @@ class GameService {
         this.enemies.splice(this.enemies.indexOf(removePlayer), 1);
     }
 
+    onGetLeaderboard(data) {
+        for (let i = 0; i < 10; i++) {
+            this.leaderboard['line_' + (i + 1) + '_left'].setText('');
+            this.leaderboard['line_' + (i + 1) + '_right'].setText('');
+        }
+
+        data.leaders.forEach((leader, key) => {
+            if (leader.username.length > 17) {
+                leader.username = leader.username.substring(0, 17) + '...';
+            }
+
+            this.leaderboard['line_' + (key + 1) + '_left'].setText((key + 1) + ': ' + leader.username);
+            this.leaderboard['line_' + (key + 1) + '_right'].setText(leader.score);
+        });
+    }
+
     onKilled() {
         if (player) {
             player.destroy();
@@ -502,6 +730,9 @@ class GameService {
         });
         this.mine_list = [];
 
+        this.grenade_list.forEach(item => {
+            item.item.destroy();
+        });
         this.grenade_list = [];
 
         this.leaderboard.destroy();
@@ -511,6 +742,8 @@ class GameService {
 
         this.can_drop = true;
         this.can_launch = true;
+
+        clearInterval(this.leaderboard_interval);
     }
 }
 

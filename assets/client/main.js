@@ -144,6 +144,10 @@ socket.on("connected", function () {
                 socket.on('explosion', function (data) {
                     game.onExplosion(data);
                 });
+
+                socket.on('get-leaderboard', function(data){
+                    game.onGetLeaderboard(data);
+                });
             }
         },
 
@@ -171,8 +175,8 @@ socket.on("connected", function () {
                 }
 
                 // add keyboard controls
-                this.spaceKey = game.engine.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-                if (this.spaceKey.isDown) {
+                this.wKey = game.engine.input.keyboard.addKey(Phaser.Keyboard.W);
+                if (this.wKey.isDown) {
                     if (game.can_drop) {
                         if (player.mines.length) {
                             let mine = player.mines[0];
@@ -194,8 +198,8 @@ socket.on("connected", function () {
                     game.can_drop = true;
                 }
 
-                this.wKey = game.engine.input.keyboard.addKey(Phaser.Keyboard.W);
-                if (this.wKey.isDown) {
+                this.spaceKey = game.engine.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+                if (this.spaceKey.isDown) {
                     if (game.can_launch) {
                         if (player.grenades.length) {
                             let grenade = player.grenades[0];
@@ -241,7 +245,7 @@ socket.on("connected", function () {
 
     jQuery(document).on('click', '#play-again-button', function () {
         jQuery('#home').fadeIn();
-        jQuery('#dead').fadeOut();
+        jQuery('#dead').hide();
         jQuery('#login').fadeIn();
     });
 
