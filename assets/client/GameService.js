@@ -2,6 +2,7 @@ let PositionService = require('./PositionService');
 let RemotePlayer = require('./RemotePlayer.js');
 let FoodObject = require('./FoodObject.js');
 let MineObject = require('./MineObject.js');
+let GrenadeObject = require('./GrenadeObject.js');
 
 class GameService {
     constructor(engine, socket) {
@@ -254,6 +255,16 @@ class GameService {
         return false;
     }
 
+    findGrenade(id) {
+        for (let i = 0; i < this.grenade_list.length; i++) {
+            if (this.grenade_list[i].id === id) {
+                return this.grenade_list[i];
+            }
+        }
+
+        return false;
+    }
+
     onEnemyMove(data) {
         let movePlayer = this.findPlayer(data.id);
 
@@ -272,27 +283,15 @@ class GameService {
         if (data.shield !== movePlayer.player.shield) {
             movePlayer.player.shield = data.shield;
 
-            let sizeChange = setInterval(() => {
-                if (movePlayer) {
-                    if (movePlayer.graphicsData) {
-                        if (movePlayer.graphicsData[0].lineWidth > data.shield) {
-                            movePlayer.graphicsData[0].lineWidth--;
-                        } else if (movePlayer.graphicsData[0].lineWidth < data.shield) {
-                            movePlayer.graphicsData[0].lineWidth++;
-                        } else {
-                            clearInterval(sizeChange);
-                        }
-                    }
-                }
-            }, 1);
+            movePlayer.graphicsData[0].lineWidth = data.shield;
 
             movePlayer.player.body.clearShapes();
-            movePlayer.player.body.addCircle((data.size + (data.shield / 2)), 0, 0);
+            movePlayer.player.body.addCircle((movePlayer.player.size + (data.shield / 2)), 0, 0);
             movePlayer.player.body.data.shapes[0].sensor = true;
         }
 
         let distance = PositionService.distanceToPointer(movePlayer.player, newPointer);
-        let speed = distance / 0.05;
+        let speed = distance / 0.06;
 
         movePlayer.rotation = PositionService.moveToPointer(movePlayer.player, speed, newPointer);
     }
@@ -319,24 +318,9 @@ class GameService {
     }
 
     onGained(data) {
-        let difference = data.new_shield - player.shield;
-
         player.shield = data.new_shield;
-        //let new_scale = data.new_size / player.initial_size;
 
-        let sizeChange = setInterval(() => {
-            if (player) {
-                if (player.graphicsData) {
-                    if (player.graphicsData[0].lineWidth > data.new_shield) {
-                        player.graphicsData[0].lineWidth--;
-                    } else if (player.graphicsData[0].lineWidth < data.new_shield) {
-                        player.graphicsData[0].lineWidth++;
-                    } else {
-                        clearInterval(sizeChange);
-                    }
-                }
-            }
-        }, 1);
+        player.graphicsData[0].lineWidth = data.new_shield;
 
         //create new body
         player.body.clearShapes();
@@ -349,16 +333,37 @@ class GameService {
     }
 
     onExplosion(data) {
-        let mine = this.findMine(data.id);
+        let object = false;
 
-        let x = mine.item.position.x;
-        let y = mine.item.position.y;
+        if (data.type === 'mine') {
+            object = this.findMine(data.id);
+        } else if (data.type === 'grenade') {
+            object = this.findGrenade(data.id);
+        } else {
+            return false;
+        }
 
-        mine.item.kill();
+
+        if (!object) {
+            return false;
+        }
+
+        let x = object.item.position.x;
+        let y = object.item.position.y;
+
+        object.item.kill();
 
         this.launchExplosion(x, y);
 
-        this.mine_list.splice(this.mine_list.indexOf(mine), 1);
+        if (object.item.inCamera) {
+            this.engine.camera.shake(0.01, 400);
+        }
+
+        if (data.type === 'mine') {
+            this.mine_list.splice(this.mine_list.indexOf(object), 1);
+        } else {
+            this.grenade_list.splice(this.grenade_list.indexOf(object), 1);
+        }
 
         if (typeof data.user_id !== 'undefined') {
             if (data.user_id === player.id) {
@@ -380,11 +385,55 @@ class GameService {
     }
 
     onMineUpdate(data) {
-        this.mine_list.push(new MineObject(data.id, data.x, data.y, data.color, data.size, data.line_size, data.user_id, this.engine));
+        data.forEach(mine => {
+            this.mine_list.push(new MineObject(mine.id, mine.x, mine.y, mine.color, mine.size, mine.line_size, mine.user_id, this.engine));
+        });
+    }
+
+    onMineRemove(data) {
+        let removeItem = this.findMine(data.id);
+
+        if (!removeItem) {
+            console.warn('Could not find the mine with the ID ' + data.id);
+            return false;
+        }
+
+        this.mine_list.splice(this.mine_list.indexOf(removeItem), 1);
+
+        //destroy the phaser object
+        removeItem.item.destroy(true, false);
+    }
+
+    onGrenadeUpdate(data) {
+        data.forEach(grenade => {
+            this.grenade_list.push(new GrenadeObject(grenade.id, grenade.x, grenade.y, grenade.color, grenade.size, grenade.line_size, grenade.user_id, this.engine));
+        });
+    }
+
+    onGrenadeMove(data) {
+        let grenade = this.findGrenade(data.id);
+
+        if (!grenade) {
+            return false;
+        }
+
+        let newPointer = {
+            x: data.x,
+            y: data.y,
+            worldX: data.x,
+            worldY: data.y,
+        };
+
+        let distance = PositionService.distanceToPointer(grenade.item, newPointer);
+        let speed = distance / 0.06;
+
+        grenade.rotation = PositionService.moveToPointer(grenade.item, speed, newPointer);
     }
 
     onItemUpdate(data) {
-        this.food_list.push(new FoodObject(data.id, data.type, data.x, data.y, data.color, data.size, data.line_size, this));
+        data.forEach(item => {
+            this.food_list.push(new FoodObject(item.id, item.type, item.x, item.y, item.color, item.size, item.line_size, this));
+        });
     }
 
     onItemRemove(data) {

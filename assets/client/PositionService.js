@@ -31,7 +31,9 @@ class PositionService {
      */
     static distanceToPointer(displayObject, pointer, world) {
 
-        if (world === undefined) { world = false; }
+        if (world === undefined) {
+            world = false;
+        }
 
         let dx = (world) ? displayObject.world.x - pointer.worldX : displayObject.x - pointer.worldX;
         let dy = (world) ? displayObject.world.y - pointer.worldY : displayObject.y - pointer.worldY;
@@ -49,7 +51,9 @@ class PositionService {
     static angleToPointer(displayObject, pointer, world) {
 
 
-        if (world === undefined) { world = false; }
+        if (world === undefined) {
+            world = false;
+        }
 
         if (world) {
             return Math.atan2(pointer.worldY - displayObject.world.y, pointer.worldX - displayObject.world.x);

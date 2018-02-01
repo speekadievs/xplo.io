@@ -207,6 +207,18 @@ socket.on("connected", function () {
                     game.onMineUpdate(data);
                 });
 
+                socket.on('mine-remove', function (data) {
+                    game.onMineRemove(data);
+                });
+
+                socket.on('grenade-update', function (data) {
+                    game.onGrenadeUpdate(data);
+                });
+
+                socket.on('grenade-move', function (data) {
+                    game.onGrenadeMove(data);
+                });
+
                 socket.on('explosion', function (data) {
                     game.onExplosion(data);
                 });
@@ -263,8 +275,21 @@ socket.on("connected", function () {
                 this.wKey = game.engine.input.keyboard.addKey(Phaser.Keyboard.W);
                 if (this.wKey.isDown) {
                     if (game.can_launch) {
-                        player.grenades.splice(-1, 1);
-                        game.grenade_box.text.setText(player.grenades.length);
+                        if (player.grenades.length) {
+                            var grenade = player.grenades[0];
+
+                            socket.emit('throw-grenade', {
+                                id: grenade.id,
+                                pointer_x: pointer.x,
+                                pointer_y: pointer.y,
+                                pointer_worldx: pointer.worldX,
+                                pointer_worldy: pointer.worldY
+                            });
+
+                            player.grenades.splice(0, 1);
+                            game.grenade_box.text.setText(player.grenades.length);
+                        }
+
                         game.can_launch = false;
                     }
                 } else {
@@ -10577,6 +10602,7 @@ var PositionService = __webpack_require__(4);
 var RemotePlayer = __webpack_require__(5);
 var FoodObject = __webpack_require__(6);
 var MineObject = __webpack_require__(7);
+var GrenadeObject = __webpack_require__(8);
 
 var GameService = function () {
     function GameService(engine, socket) {
@@ -10839,6 +10865,17 @@ var GameService = function () {
             return false;
         }
     }, {
+        key: 'findGrenade',
+        value: function findGrenade(id) {
+            for (var i = 0; i < this.grenade_list.length; i++) {
+                if (this.grenade_list[i].id === id) {
+                    return this.grenade_list[i];
+                }
+            }
+
+            return false;
+        }
+    }, {
         key: 'onEnemyMove',
         value: function onEnemyMove(data) {
             var movePlayer = this.findPlayer(data.id);
@@ -10858,27 +10895,15 @@ var GameService = function () {
             if (data.shield !== movePlayer.player.shield) {
                 movePlayer.player.shield = data.shield;
 
-                var sizeChange = setInterval(function () {
-                    if (movePlayer) {
-                        if (movePlayer.graphicsData) {
-                            if (movePlayer.graphicsData[0].lineWidth > data.shield) {
-                                movePlayer.graphicsData[0].lineWidth--;
-                            } else if (movePlayer.graphicsData[0].lineWidth < data.shield) {
-                                movePlayer.graphicsData[0].lineWidth++;
-                            } else {
-                                clearInterval(sizeChange);
-                            }
-                        }
-                    }
-                }, 1);
+                movePlayer.graphicsData[0].lineWidth = data.shield;
 
                 movePlayer.player.body.clearShapes();
-                movePlayer.player.body.addCircle(data.size + data.shield / 2, 0, 0);
+                movePlayer.player.body.addCircle(movePlayer.player.size + data.shield / 2, 0, 0);
                 movePlayer.player.body.data.shapes[0].sensor = true;
             }
 
             var distance = PositionService.distanceToPointer(movePlayer.player, newPointer);
-            var speed = distance / 0.05;
+            var speed = distance / 0.06;
 
             movePlayer.rotation = PositionService.moveToPointer(movePlayer.player, speed, newPointer);
         }
@@ -10907,24 +10932,9 @@ var GameService = function () {
     }, {
         key: 'onGained',
         value: function onGained(data) {
-            var difference = data.new_shield - player.shield;
-
             player.shield = data.new_shield;
-            //let new_scale = data.new_size / player.initial_size;
 
-            var sizeChange = setInterval(function () {
-                if (player) {
-                    if (player.graphicsData) {
-                        if (player.graphicsData[0].lineWidth > data.new_shield) {
-                            player.graphicsData[0].lineWidth--;
-                        } else if (player.graphicsData[0].lineWidth < data.new_shield) {
-                            player.graphicsData[0].lineWidth++;
-                        } else {
-                            clearInterval(sizeChange);
-                        }
-                    }
-                }
-            }, 1);
+            player.graphicsData[0].lineWidth = data.new_shield;
 
             //create new body
             player.body.clearShapes();
@@ -10938,16 +10948,36 @@ var GameService = function () {
     }, {
         key: 'onExplosion',
         value: function onExplosion(data) {
-            var mine = this.findMine(data.id);
+            var object = false;
 
-            var x = mine.item.position.x;
-            var y = mine.item.position.y;
+            if (data.type === 'mine') {
+                object = this.findMine(data.id);
+            } else if (data.type === 'grenade') {
+                object = this.findGrenade(data.id);
+            } else {
+                return false;
+            }
 
-            mine.item.kill();
+            if (!object) {
+                return false;
+            }
+
+            var x = object.item.position.x;
+            var y = object.item.position.y;
+
+            object.item.kill();
 
             this.launchExplosion(x, y);
 
-            this.mine_list.splice(this.mine_list.indexOf(mine), 1);
+            if (object.item.inCamera) {
+                this.engine.camera.shake(0.01, 400);
+            }
+
+            if (data.type === 'mine') {
+                this.mine_list.splice(this.mine_list.indexOf(object), 1);
+            } else {
+                this.grenade_list.splice(this.grenade_list.indexOf(object), 1);
+            }
 
             if (typeof data.user_id !== 'undefined') {
                 if (data.user_id === player.id) {
@@ -10972,12 +11002,65 @@ var GameService = function () {
     }, {
         key: 'onMineUpdate',
         value: function onMineUpdate(data) {
-            this.mine_list.push(new MineObject(data.id, data.x, data.y, data.color, data.size, data.line_size, data.user_id, this.engine));
+            var _this = this;
+
+            data.forEach(function (mine) {
+                _this.mine_list.push(new MineObject(mine.id, mine.x, mine.y, mine.color, mine.size, mine.line_size, mine.user_id, _this.engine));
+            });
+        }
+    }, {
+        key: 'onMineRemove',
+        value: function onMineRemove(data) {
+            var removeItem = this.findMine(data.id);
+
+            if (!removeItem) {
+                console.warn('Could not find the mine with the ID ' + data.id);
+                return false;
+            }
+
+            this.mine_list.splice(this.mine_list.indexOf(removeItem), 1);
+
+            //destroy the phaser object
+            removeItem.item.destroy(true, false);
+        }
+    }, {
+        key: 'onGrenadeUpdate',
+        value: function onGrenadeUpdate(data) {
+            var _this2 = this;
+
+            data.forEach(function (grenade) {
+                _this2.grenade_list.push(new GrenadeObject(grenade.id, grenade.x, grenade.y, grenade.color, grenade.size, grenade.line_size, grenade.user_id, _this2.engine));
+            });
+        }
+    }, {
+        key: 'onGrenadeMove',
+        value: function onGrenadeMove(data) {
+            var grenade = this.findGrenade(data.id);
+
+            if (!grenade) {
+                return false;
+            }
+
+            var newPointer = {
+                x: data.x,
+                y: data.y,
+                worldX: data.x,
+                worldY: data.y
+            };
+
+            var distance = PositionService.distanceToPointer(grenade.item, newPointer);
+            var speed = distance / 0.06;
+
+            grenade.rotation = PositionService.moveToPointer(grenade.item, speed, newPointer);
         }
     }, {
         key: 'onItemUpdate',
         value: function onItemUpdate(data) {
-            this.food_list.push(new FoodObject(data.id, data.type, data.x, data.y, data.color, data.size, data.line_size, this));
+            var _this3 = this;
+
+            data.forEach(function (item) {
+                _this3.food_list.push(new FoodObject(item.id, item.type, item.x, item.y, item.color, item.size, item.line_size, _this3));
+            });
         }
     }, {
         key: 'onItemRemove',
@@ -11014,15 +11097,15 @@ var GameService = function () {
     }, {
         key: 'onKilled',
         value: function onKilled() {
-            var _this = this;
+            var _this4 = this;
 
             if (player) {
                 player.destroy();
 
                 setTimeout(function () {
-                    _this.restart();
+                    _this4.restart();
 
-                    _this.engine.state.start('BlankStage', true);
+                    _this4.engine.state.start('BlankStage', true);
 
                     jQuery('#game').fadeOut();
                     jQuery('#home').fadeIn();
@@ -11309,6 +11392,62 @@ var MineObject = function MineObject(id, startx, starty, color, size, line_size,
 };
 
 module.exports = MineObject;
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var GrenadeObject = function GrenadeObject(id, startx, starty, color, size, line_size, user_id, engine) {
+    var _this = this;
+
+    _classCallCheck(this, GrenadeObject);
+
+    // unique id for the food.
+    //generated in the server with node-uuid
+    this.id = id;
+
+    //positinon of the food
+    this.posx = startx;
+    this.posy = starty;
+    this.powerup = false;
+
+    var graphics = engine.add.graphics(startx, starty);
+    graphics.radius = size;
+
+    // set a fill and line style
+    graphics.beginFill(color);
+    graphics.lineStyle(line_size, color, 0.5);
+    graphics.drawCircle(0, 0, size);
+    graphics.endFill();
+    graphics.anchor.setTo(0.5, 0.5);
+
+    this.item = engine.add.sprite(this.posx, this.posy, graphics.generateTexture());
+
+    this.item.type = 'grenade';
+    this.item.id = id;
+    this.item.user_id = user_id;
+    this.item.self_kill = false;
+
+    setTimeout(function () {
+        _this.item.self_kill = true;
+    }, 5000);
+
+    engine.physics.p2.enableBody(this.item);
+    this.item.body.clearShapes();
+    this.item.body_size = size;
+    this.item.body.addCircle(size + line_size, 0, 0);
+    this.item.body.data.gravityScale = 0;
+    this.item.body.data.shapes[0].sensor = true;
+
+    graphics.destroy();
+};
+
+module.exports = GrenadeObject;
 
 /***/ })
 /******/ ]);

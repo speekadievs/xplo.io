@@ -60,7 +60,6 @@ socket.on("connected", function () {
             //game.stage.backgroundColor = 0xE1A193;;
 
 
-
             // keep the spacebar from propogating up to the browser
             this.game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);
 
@@ -68,7 +67,7 @@ socket.on("connected", function () {
 
             game.onConnected();
 
-            if(!game.started){
+            if (!game.started) {
                 game.started = true;
 
                 //listen for main player creation
@@ -130,6 +129,18 @@ socket.on("connected", function () {
                     game.onMineUpdate(data);
                 });
 
+                socket.on('mine-remove', function (data) {
+                    game.onMineRemove(data);
+                });
+
+                socket.on('grenade-update', function (data) {
+                    game.onGrenadeUpdate(data);
+                });
+
+                socket.on('grenade-move', function (data) {
+                    game.onGrenadeMove(data);
+                });
+
                 socket.on('explosion', function (data) {
                     game.onExplosion(data);
                 });
@@ -186,8 +197,21 @@ socket.on("connected", function () {
                 this.wKey = game.engine.input.keyboard.addKey(Phaser.Keyboard.W);
                 if (this.wKey.isDown) {
                     if (game.can_launch) {
-                        player.grenades.splice(-1, 1);
-                        game.grenade_box.text.setText(player.grenades.length);
+                        if (player.grenades.length) {
+                            let grenade = player.grenades[0];
+
+                            socket.emit('throw-grenade', {
+                                id: grenade.id,
+                                pointer_x: pointer.x,
+                                pointer_y: pointer.y,
+                                pointer_worldx: pointer.worldX,
+                                pointer_worldy: pointer.worldY,
+                            });
+
+                            player.grenades.splice(0, 1);
+                            game.grenade_box.text.setText(player.grenades.length);
+                        }
+
                         game.can_launch = false;
                     }
                 } else {

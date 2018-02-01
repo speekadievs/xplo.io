@@ -33,6 +33,7 @@ class GameService {
         this.time_step = 1 / 70;
 
         this.removable_bodies = [];
+        this.moving_grenades = [];
 
         this.properties = {
             max_food: 1500,
@@ -72,6 +73,66 @@ class GameService {
 
             this.removable_bodies = [];
         }
+
+        if (this.moving_grenades.length > 0) {
+            let removableGrenades = [];
+
+            this.moving_grenades.forEach((id, key) => {
+                let grenade = this.findGrenade(id);
+                if (!grenade) {
+                    return false;
+                }
+
+                grenade.body.angle = PositionService.moveToPointer(grenade, grenade.meta.speed, {}, 0, grenade.meta.player_angle);
+
+                grenade.x = grenade.body.position[0];
+                grenade.y = grenade.body.position[1];
+
+                //new player position to be sent back to client.
+                let info = {
+                    id: grenade.id,
+                    x: grenade.body.position[0],
+                    y: grenade.body.position[1],
+                    angle: grenade.body.angle
+                };
+
+                //send to sender (not to every clients).
+                this.io.emit('grenade-move', info);
+
+                if ((currentTime - grenade.meta.start) >= 800) {
+                    removableGrenades.push(key);
+
+                    this.io.emit('explosion', {
+                        id: grenade.id,
+                        type: 'grenade'
+                    });
+
+                    this.removable_bodies.push(grenade.body);
+                }
+            });
+
+            for (let i = removableGrenades.length - 1; i >= 0; i--) {
+                this.moving_grenades.splice(removableGrenades[i], 1);
+            }
+        }
+
+        let explodableMines = [];
+        this.mine_list.forEach((mine, key) => {
+            if (((currentTime - mine.dropped) / 1000) >= 60) {
+                explodableMines.push(key);
+
+                this.io.emit('explosion', {
+                    id: mine.id,
+                    type: 'mine'
+                });
+
+                this.removable_bodies.push(mine.body);
+            }
+        });
+
+        for (let i = explodableMines.length - 1; i >= 0; i--) {
+            this.mine_list.splice(explodableMines[i], 1);
+        }
     }
 
     heartbeat() {
@@ -110,6 +171,7 @@ class GameService {
             return false;
         }
 
+        let pushableItems = [];
         //create n number of foods to the game
         for (let i = 0; i < n; i++) {
             //create the unique id using node-uuid
@@ -125,10 +187,11 @@ class GameService {
             let foodEntity = new FoodObject(this.properties.width, this.properties.height, color, type, uniqueId);
 
             this.food_list.push(foodEntity);
-
-            //set the food data back to client
-            this.io.emit("item-update", foodEntity);
+            pushableItems.push(foodEntity);
         }
+
+        //set the food data back to client
+        this.io.emit("item-update", pushableItems);
     }
 
     findPlayer(id) {
@@ -186,6 +249,9 @@ class GameService {
         } else if (firstBody.game.type === 'mine') {
             object = this.findMine(firstBody.game.id);
             objectBody = firstBody;
+        } else if (firstBody.game.type === 'grenade') {
+            object = this.findGrenade(firstBody.game.id);
+            objectBody = firstBody;
         }
 
         if (secondBody.game.type === 'player') {
@@ -196,6 +262,9 @@ class GameService {
             objectBody = secondBody;
         } else if (secondBody.game.type === 'mine') {
             object = this.findMine(secondBody.game.id);
+            objectBody = secondBody;
+        } else if (secondBody.game.type === 'grenade') {
+            object = this.findGrenade(secondBody.game.id);
             objectBody = secondBody;
         }
 
@@ -249,42 +318,53 @@ class GameService {
         } else {
             let killer = game.findPlayer(object.user_id);
 
-            if (!player && !killer) {
+            if (!player) {
                 console.log('could not find player and killer');
                 return false;
             }
 
-            if (object.type === 'mine') {
-                if (object.user_id === player.id) {
-                    if (!object.self_kill) {
-                        return false;
-                    }
-                }
-
-                player.shield = player.shield - this.properties.mine_damage;
-                if (player.shield < 10) {
-                    this.io.emit('explosion', {
-                        id: object.id
-                    });
-
-                    this.io.emit('remove-player', {
-                        id: player.id
-                    });
-
-                    socket.emit("killed");
-
-                    killer.kills++;
-
-                    this.removable_bodies.push(playerBody);
-                    this.player_list.splice(this.player_list.indexOf(player), 1);
-                } else {
-                    this.io.emit('explosion', {
-                        id: object.id,
-                        user_id: player.id,
-                        new_shield: player.shield
-                    });
+            if (object.user_id === player.id) {
+                if (!object.self_kill) {
+                    return false;
                 }
             }
+
+            player.shield = player.shield - (object.type === 'mine' ? this.properties.mine_damage : this.properties.grenade_damage);
+            if (player.shield < 10) {
+                this.io.emit('explosion', {
+                    id: object.id,
+                    type: object.type
+                });
+
+                this.io.emit('remove-player', {
+                    id: player.id
+                });
+
+                socket.emit("killed");
+
+                if (killer) {
+                    killer.kills++;
+                }
+
+                this.removable_bodies.push(playerBody);
+
+                this.player_list.splice(this.player_list.indexOf(player), 1);
+            } else {
+                this.io.emit('explosion', {
+                    id: object.id,
+                    type: object.type,
+                    user_id: player.id,
+                    new_shield: player.shield
+                });
+            }
+
+            if (object.type === 'mine') {
+                this.mine_list.splice(this.mine_list.indexOf(object), 1);
+            } else if (object.type === 'grenade') {
+                this.grenade_list.splice(this.grenade_list.indexOf(object), 1);
+            }
+
+            this.removable_bodies.push(objectBody);
         }
     }
 }
@@ -314,7 +394,7 @@ class FoodObject {
         });
 
         this.body.addShape(new p2.Circle({
-            radius: (this.size + (this.line_size / 2))
+            radius: (this.size / 2)
         }));
 
         this.body.game = {
@@ -347,7 +427,8 @@ class FoodObject {
 }
 
 class Player {
-    constructor(username, startX, startY, startAngle) {
+    constructor(id, username, startX, startY, startAngle) {
+        this.id = id;
         this.username = username;
         this.x = startX;
         this.y = startY;
@@ -359,11 +440,40 @@ class Player {
         this.kills = 0;
         this.type = 'player';
 
+        this.body = false;
+
         //We need to intilaize with true.
         this.sendData = true;
         this.size = 40;
         this.dead = false;
         this.color = UtilService.getRandomColor();
+        this.start_thrust = false;
+
+        this.createBody();
+    }
+
+    createBody() {
+        //create body for the player
+        this.body = new p2.Body({
+            mass: 1,
+            position: [this.x, this.y],
+            fixedRotation: true,
+            collisionResponse: false
+        });
+
+        this.body.addShape(new p2.Circle({
+            radius: (this.size + (this.shield / 2))
+        }));
+
+        this.body.game = {
+            id: this.id,
+            type: this.type
+        };
+
+        this.body.gravityScale = 0;
+        this.body.shapes[0].sensor = true;
+
+        world.addBody(this.body);
     }
 
     findMine(id) {
@@ -463,29 +573,7 @@ io.sockets.on('connection', function (socket) {
         let randomY = UtilService.getRandomInt(2000, (game.properties.width - 2000));
 
         //new player instance
-        let newPlayer = new Player(data.username, randomX, randomY, data.angle);
-
-        //create body for the player
-        newPlayer.playerBody = new p2.Body({
-            mass: 1,
-            position: [randomX, randomY],
-            fixedRotation: true,
-            collisionResponse: false
-        });
-
-        newPlayer.playerBody.addShape(new p2.Circle({
-            radius: (newPlayer.size + (newPlayer.shield / 2))
-        }));
-
-        newPlayer.playerBody.game = {
-            id: this.id,
-            type: newPlayer.type
-        };
-
-        newPlayer.playerBody.gravityScale = 0;
-        newPlayer.playerBody.shapes[0].sensor = true;
-
-        world.addBody(newPlayer.playerBody);
+        let newPlayer = new Player(this.id, data.username, randomX, randomY, data.angle);
 
         console.log("created new player with id " + this.id);
 
@@ -538,11 +626,9 @@ io.sockets.on('connection', function (socket) {
             this.emit("new-enemy", existingPlayerInfo);
         }
 
-        //Tell the client to make foods that are exisiting
-        for (let j = 0; j < game.food_list.length; j++) {
-            let foodPick = game.food_list[j];
-            this.emit('item-update', foodPick);
-        }
+        this.emit('item-update', game.food_list);
+        this.emit('mine-update', game.mine_list);
+        this.emit('grenade-update', game.grenade_list);
 
         //send message to every connected client except the sender
         this.broadcast.emit('new-enemy', currentPlayerInfo);
@@ -582,19 +668,19 @@ io.sockets.on('connection', function (socket) {
 
         //moving the player to the new inputs from the player
         if (PositionService.distanceToPointer(movePlayer, serverPointer) <= 30) {
-            movePlayer.playerBody.angle = PositionService.moveToPointer(movePlayer, 0, serverPointer, 1000);
+            movePlayer.body.angle = PositionService.moveToPointer(movePlayer, 0, serverPointer, 100);
         } else {
-            movePlayer.playerBody.angle = PositionService.moveToPointer(movePlayer, movePlayer.speed, serverPointer);
+            movePlayer.body.angle = PositionService.moveToPointer(movePlayer, movePlayer.speed, serverPointer);
         }
 
-        movePlayer.x = movePlayer.playerBody.position[0];
-        movePlayer.y = movePlayer.playerBody.position[1];
+        movePlayer.x = movePlayer.body.position[0];
+        movePlayer.y = movePlayer.body.position[1];
 
         //new player position to be sent back to client.
         let info = {
-            x: movePlayer.playerBody.position[0],
-            y: movePlayer.playerBody.position[1],
-            angle: movePlayer.playerBody.angle
+            x: movePlayer.body.position[0],
+            y: movePlayer.body.position[1],
+            angle: movePlayer.body.angle
         };
 
         //send to sender (not to every clients).
@@ -603,9 +689,9 @@ io.sockets.on('connection', function (socket) {
         //data to be sent back to everyone except sender
         let moveplayerData = {
             id: movePlayer.id,
-            x: movePlayer.playerBody.position[0],
-            y: movePlayer.playerBody.position[1],
-            angle: movePlayer.playerBody.angle,
+            x: movePlayer.body.position[0],
+            y: movePlayer.body.position[1],
+            angle: movePlayer.body.angle,
             size: movePlayer.size,
             shield: movePlayer.shield
         };
@@ -630,6 +716,7 @@ io.sockets.on('connection', function (socket) {
         mine.size = 30;
         mine.line_size = 20;
         mine.type = 'mine';
+        mine.dropped = (new Date()).getTime();
 
         mine.createBody();
 
@@ -642,8 +729,47 @@ io.sockets.on('connection', function (socket) {
 
         player.removeMine(data.id);
 
-        this.broadcast.emit('mine-update', mine);
-        this.emit('mine-update', mine);
+        this.broadcast.emit('mine-update', [mine]);
+        this.emit('mine-update', [mine]);
+    });
+
+    socket.on('throw-grenade', function (data) {
+        let player = game.findPlayer(this.id);
+        let grenade = player.findGrenade(data.id);
+
+        if (!grenade) {
+            console.log(data);
+            console.log("could not find grenade");
+            return false;
+        }
+
+        grenade.x = player.x;
+        grenade.y = player.y;
+        grenade.color = 0xff0000;
+        grenade.size = 30;
+        grenade.line_size = 20;
+        grenade.type = 'grenade';
+        grenade.meta = {
+            start: (new Date()).getTime(),
+            player_angle: player.body.angle,
+            speed: player.speed * 3
+        };
+
+        grenade.createBody();
+
+        grenade.self_kill = false;
+        setTimeout(() => {
+            grenade.self_kill = true;
+        }, 3000);
+
+        game.grenade_list.push(grenade);
+
+        player.removeGrenade(data.id);
+
+        this.broadcast.emit('grenade-update', [grenade]);
+        this.emit('grenade-update', [grenade]);
+
+        game.moving_grenades.push(grenade.id);
     });
 });
 
