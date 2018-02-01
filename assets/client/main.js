@@ -247,5 +247,33 @@ socket.on("connected", function () {
 
     jQuery(document).on('change', '#username', function () {
         window.username = jQuery(this).val();
-    })
+    });
+
+    jQuery(document).on('click', '#send-feedback', function () {
+        let self = jQuery(this);
+        let previousText = self.text();
+
+        let type = jQuery('#contacts-type');
+        let content = jQuery('#contacts-content');
+
+        self.attr('disabled', true);
+        self.html('<i class="fa fa-refresh fa-spin">');
+
+        let postData = {
+            type: type,
+            content: content
+        };
+
+        jQuery.post('/send/feedback', postData, function() {
+            self.attr('disabled', false);
+            self.html = previousText;
+
+            content.val('');
+
+            jQuery('#contacts-success').show();
+            setTimeout(() => {
+                jQuery('#contacts-success').fadeOut();
+            }, 4000);
+        });
+    });
 });

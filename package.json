@@ -30,15 +30,16 @@
     "uglifyjs-webpack-plugin": "^1.0.0-beta.2"
   },
   "dependencies": {
-    "jquery": "^3.2.1",
-    "vue": "^2.5.13",
-    "express": "^4.15.2",
-    "node-uuid": "^1.4.8",
-    "socket.io": "^2.0.3",
-    "socket.io-redis": "^5.2.0",
-    "socket.io-client": "^2.0.4",
+    "babel-plugin-transform-es2015-shorthand-properties": "^6.24.1",
+    "body-parser": "^1.18.2",
     "collect.js": "^4.0.1",
+    "express": "^4.15.2",
+    "jquery": "^3.2.1",
+    "node-uuid": "^1.4.8",
     "p2": "^0.7.1",
-    "babel-plugin-transform-es2015-shorthand-properties": "^6.24.1"
+    "socket.io": "^2.0.3",
+    "socket.io-client": "^2.0.4",
+    "socket.io-redis": "^5.2.0",
+    "vue": "^2.5.13"
   }
 }

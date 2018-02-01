@@ -1,4 +1,5 @@
 let express = require('express');
+let bodyParser = require('body-parser');
 
 //require p2 physics library in the server.
 let p2 = require('p2');
@@ -10,6 +11,10 @@ let app = express();
 
 let server = require('http').Server(app);
 
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/public/index.html');
 });
@@ -17,6 +22,11 @@ app.get('/', function (req, res) {
 app.use('/js', express.static(__dirname + '/public/js'));
 app.use('/images', express.static(__dirname + '/public/images'));
 app.use('/css', express.static(__dirname + '/public/css'));
+
+app.post('/send/feedback', function(request, response){
+    console.log(request.body.type);
+    console.log(request.body.content);
+});
 
 let UtilService = require('./assets/UtilService.js');
 let PositionService = require('./assets/server/PositionService');
@@ -46,7 +56,8 @@ class GameService {
             grenade_color: '0xd17732',
             max_shield: 100,
             mine_damage: 20,
-            grenade_damage: 10
+            grenade_damage: 5,
+            mine_lifetime: 120
         };
 
         this.world = world;
@@ -118,7 +129,7 @@ class GameService {
 
         let explodableMines = [];
         this.mine_list.forEach((mine, key) => {
-            if (((currentTime - mine.dropped) / 1000) >= 60) {
+            if (((currentTime - mine.dropped) / 1000) >= this.properties.mine_lifetime) {
                 explodableMines.push(key);
 
                 this.io.emit('explosion', {
@@ -285,11 +296,8 @@ class GameService {
                     return false;
                 }
 
-                //increase player size
-                //movePlayer.size += 1;
                 player.shield += 1;
 
-                //broadcast the new size
                 socket.emit("gained", {
                     new_size: player.size,
                     new_shield: player.shield
@@ -309,6 +317,8 @@ class GameService {
                     object: object
                 });
             }
+
+            player.score++;
 
             this.food_list.splice(this.food_list.indexOf(object), 1);
 
@@ -343,7 +353,7 @@ class GameService {
                 socket.emit("killed");
 
                 if (killer) {
-                    killer.kills++;
+                    killer.score = killer.score + 50;
                 }
 
                 this.removable_bodies.push(playerBody);
@@ -437,7 +447,7 @@ class Player {
         this.shield = 10;
         this.mines = [];
         this.grenades = [];
-        this.kills = 0;
+        this.score = 0;
         this.type = 'player';
 
         this.body = false;
@@ -448,6 +458,7 @@ class Player {
         this.dead = false;
         this.color = UtilService.getRandomColor();
         this.start_thrust = false;
+        this.start_time = (new Date()).getTime();
 
         this.createBody();
     }

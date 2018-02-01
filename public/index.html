@@ -3,12 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
+    <meta name="description" content="Blow everyone up and stay alive as long as possible">
+    <meta name="author" content="Artūrs Lukjaņenoks">
     <title>Laravel : Admin</title>
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css">
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/css/style.css">
 
 </head>
@@ -36,8 +36,8 @@
                     </div>
                     <div class="form-group text-center">
                         <ul class="list-unstyled">
-                            <li><strong>W</strong> - Launch a grenade</li>
-                            <li><strong>Space</strong> - Drop a mine</li>
+                            <li>Use <strong>W</strong> to throw a grenade</li>
+                            <li>Use <strong>Space</strong> to drop a mine</li>
                         </ul>
                     </div>
                 </div>
@@ -55,23 +55,103 @@
         </div>
         <div class="col-md-8 offset-md-2 block align-self-end" style="margin-bottom:10px;">
             <div class="row">
+                <!--<div class="col block">-->
+                    <!--<a href='http://play.google.com/store/?pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'>-->
+                        <!--<img alt='Get it on Google Play' src='/images/google-badge.png' style="width:200px"/>-->
+                    <!--</a>-->
+                <!--</div>-->
                 <div class="col block">
-                    <a href='http://play.google.com/store/?pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'>
-                        <img alt='Get it on Google Play' src='/images/google-badge.png' style="width:200px"/>
-                    </a>
-                </div>
-                <div class="col block">
-                    <ul class="list-inline text-right" style="margin-top:25px">
+                    <ul class="list-inline text-center" style="margin-top:15px">
                         <li class="list-inline-item align-middle">
-                            <a href="#">About</a>
+                            <a href="#" data-toggle="modal" data-target="#about">About</a>
                         </li>
                         <li class="list-inline-item align-middle">
-                            <a href="#">Contacts</a>
+                            <a href="#" data-toggle="modal" data-target="#contacts">Contacts</a>
                         </li>
                         <li class="list-inline-item align-middle">
                             <a href="http://iogames.space" target="_blank">More IO Games</a>
                         </li>
+                        <li class="list-inline-item align-middle">
+                            <a href="#" data-toggle="modal" data-target="#changelog">Changelog</a>
+                        </li>
                     </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="about" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">About</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Modal body text goes here.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="contacts" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Contacts</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="contacts-success" class="form-group" style="display:none">
+                        <div class="alert alert-success">
+                            Your feedback has been successfully sent. Thank you.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="contacts-type">Type</label>
+                        <select id="contacts-type" class="form-control">
+                            <option value="bug">Bug</option>
+                            <option value="feature">Feature</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="contacts-content">Message</label>
+                        <textarea id="contacts-content" class="form-control"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="send-feedback">Send</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="changelog" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Changelog</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h5>v0.1.0</h5>
+                    <ul>
+                        <li>Did some stuff</li>
+                        <li>Did some more stuff</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -84,6 +164,6 @@
 <script src="js/lib/phaser.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="js/app.js"></script>
-
+<script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/js/bootstrap.min.js"></script>
 
 </html>

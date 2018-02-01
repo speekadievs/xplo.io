@@ -325,6 +325,34 @@ socket.on("connected", function () {
     jQuery(document).on('change', '#username', function () {
         window.username = jQuery(this).val();
     });
+
+    jQuery(document).on('click', '#send-feedback', function () {
+        var self = jQuery(this);
+        var previousText = self.text();
+
+        var type = jQuery('#contacts-type');
+        var content = jQuery('#contacts-content');
+
+        self.attr('disabled', true);
+        self.html('<i class="fa fa-refresh fa-spin">');
+
+        var postData = {
+            type: type,
+            content: content
+        };
+
+        jQuery.post('/send/feedback', postData, function () {
+            self.attr('disabled', false);
+            self.html = previousText;
+
+            content.val('');
+
+            jQuery('#contacts-success').show();
+            setTimeout(function () {
+                jQuery('#contacts-success').fadeOut();
+            }, 4000);
+        });
+    });
 });
 
 /***/ }),
