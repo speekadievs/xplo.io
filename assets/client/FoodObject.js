@@ -20,6 +20,10 @@ class FoodObject {
 
         this.item = game.engine.add.sprite(this.posx, this.posy, graphics.generateTexture(), game.item_group);
 
+        this.item.alpha = 0;
+
+        game.engine.add.tween(this.item).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None, true, 0);
+
         this.item.type = type;
         this.item.id = id;
 

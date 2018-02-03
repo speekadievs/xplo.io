@@ -1,4 +1,5 @@
 window.jQuery = require('jquery');
+window.moment = require('moment');
 
 // Do some front-end stuff
 
@@ -40,7 +41,7 @@ socket.on("connected", function () {
         preload: function () {
             engine.stage.disableVisibilityChange = true;
             engine.scale.scaleMode = Phaser.ScaleManager.RESIZE;
-            engine.world.setBounds(0, 0, (game.properties.gameWidth - 1000), (game.properties.gameHeight - 1000), false, false, false, false);
+            engine.world.setBounds(0, 0, (game.properties.gameWidth - 500), (game.properties.gameHeight - 500), false, false, false, false);
             engine.physics.startSystem(Phaser.Physics.P2JS);
             engine.physics.p2.setBoundsToWorld(true, true, true, true, true);
             engine.physics.p2.gravity.y = 0;
@@ -97,7 +98,7 @@ socket.on("connected", function () {
 
                 //when the player gets killed
                 socket.on('killed', function (data) {
-                    game.onKilled()
+                    game.onKilled(data)
                 });
 
                 //when the player gains in size
@@ -145,7 +146,7 @@ socket.on("connected", function () {
                     game.onExplosion(data);
                 });
 
-                socket.on('get-leaderboard', function(data){
+                socket.on('get-leaderboard', function (data) {
                     game.onGetLeaderboard(data);
                 });
             }
@@ -162,7 +163,7 @@ socket.on("connected", function () {
                 let pointer = engine.input.mousePointer;
 
                 //Send a new position data to the server
-                socket.emit('input_fired', {
+                socket.emit('move-pointer', {
                     pointer_x: pointer.x,
                     pointer_y: pointer.y,
                     pointer_worldx: pointer.worldX,
@@ -170,9 +171,12 @@ socket.on("connected", function () {
                 });
 
                 if (player) {
-                    player.text.x = player.x;
-                    player.text.y = player.y;
+                    player.updateTextPos();
                 }
+
+                game.enemies.forEach((enemy) => {
+                    enemy.updateTextPos();
+                });
 
                 // add keyboard controls
                 this.wKey = game.engine.input.keyboard.addKey(Phaser.Keyboard.W);
@@ -221,8 +225,37 @@ socket.on("connected", function () {
                 } else {
                     game.can_launch = true;
                 }
+
+                if (game.leaderboard) {
+                    engine.world.bringToTop(game.leaderboard);
+                }
+
+                if (game.shield_box) {
+                    engine.world.bringToTop(game.shield_box);
+                }
+
+                if (game.mine_box) {
+                    engine.world.bringToTop(game.mine_box);
+                }
+
+                if (game.grenade_box) {
+                    engine.world.bringToTop(game.grenade_box);
+                }
             }
         },
+        preRender: function () {
+            if (player) {
+                player.updateTextPos();
+
+                player.text.updateTransform();
+            }
+
+            game.enemies.forEach((enemy) => {
+                enemy.updateTextPos();
+
+                enemy.text.updateTransform();
+            });
+        }
     };
 
     jQuery(document).on('click', '#play-button', function () {
@@ -264,13 +297,13 @@ socket.on("connected", function () {
         self.html('<i class="fa fa-refresh fa-spin">');
 
         let postData = {
-            type: type,
-            content: content
+            type: type.val(),
+            content: content.val()
         };
 
-        jQuery.post('/send/feedback', postData, function() {
+        jQuery.post('/send/feedback', postData, function () {
             self.attr('disabled', false);
-            self.html = previousText;
+            self.html(previousText);
 
             content.val('');
 
@@ -278,6 +311,8 @@ socket.on("connected", function () {
             setTimeout(() => {
                 jQuery('#contacts-success').fadeOut();
             }, 4000);
+
+
         });
     });
 });

@@ -5,12 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="Blow everyone up and stay alive as long as possible">
     <meta name="author" content="Artūrs Lukjaņenoks">
-    <title>Laravel : Admin</title>
+    <title>XPLO.IO</title>
     <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css">
-    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css"
+          href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css"
+          href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/css/style.css">
 
+    <meta property="og:url" content="http://xplo.io"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:title" content="XPLO.IO"/>
+    <meta property="og:description" content="Blow everyone up and stay alive as long as possible"/>
+    <meta property="og:image" content="http://xplo.io/images/social_big.png"/>
+
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@xplo_io">
+    <meta name="twitter:title" content="XPLO.IO">
+    <meta name="twitter:description" content="Blow everyone up and stay alive as long as possible">
+    <meta name="twitter:image" content="http://xplo.io/images/social_big.png">
+
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({
+            google_ad_client: "ca-pub-1319434705599854",
+            enable_page_level_ads: true
+        });
+    </script>
 </head>
 <body>
 
@@ -36,15 +57,20 @@
                     </div>
                     <div class="form-group text-center">
                         <ul class="list-unstyled">
-                            <li>Use <strong>W</strong> to throw a grenade</li>
-                            <li>Use <strong>Space</strong> to drop a mine</li>
+                            <li>Use <strong>SPACE</strong> to throw a grenade</li>
+                            <li>Use <strong>W</strong> to drop a mine</li>
                         </ul>
                     </div>
                 </div>
             </div>
             <div id="dead" class="text-center" style="display:none">
                 <div class="form-group" style="padding: 80px 0">
-                    <h2>Oh no, you exploded!</h2>
+                    <h2 style="margin-bottom: 40px">Oh no, you exploded!</h2>
+                    <h4>Score: <span class="score"></span></h4>
+                    <h4>Time: <span class="time"></span></h4>
+                </div>
+                <div class="form-group">
+                    <div class="addthis_inline_share_toolbox"></div>
                 </div>
                 <div class="form-group">
                     <button id="play-again-button" type="button" class="btn btn-primary" style="width:150px">
@@ -53,18 +79,23 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-4 offset-md-4 block">
+
+        </div>
         <div class="col-md-8 offset-md-2 block align-self-end" style="margin-bottom:10px;">
             <div class="row">
                 <!--<div class="col block">-->
-                    <!--<a href='http://play.google.com/store/?pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'>-->
-                        <!--<img alt='Get it on Google Play' src='/images/google-badge.png' style="width:200px"/>-->
-                    <!--</a>-->
+                <!--<a href='http://play.google.com/store/?pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'>-->
+                <!--<img alt='Get it on Google Play' src='/images/google-badge.png' style="width:200px"/>-->
+                <!--</a>-->
                 <!--</div>-->
+                <div class="col block" style="padding-top:5px">
+                    <a href="https://twitter.com/xplo_io">
+                        <i class="fa fa-twitter-square fa-3x"></i>
+                    </a>
+                </div>
                 <div class="col block">
                     <ul class="list-inline text-center" style="margin-top:15px">
-                        <li class="list-inline-item align-middle">
-                            <a href="#" data-toggle="modal" data-target="#about">About</a>
-                        </li>
                         <li class="list-inline-item align-middle">
                             <a href="#" data-toggle="modal" data-target="#contacts">Contacts</a>
                         </li>
@@ -75,25 +106,6 @@
                             <a href="#" data-toggle="modal" data-target="#changelog">Changelog</a>
                         </li>
                     </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="about" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">About</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>Modal body text goes here.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -114,11 +126,15 @@
                             Your feedback has been successfully sent. Thank you.
                         </div>
                     </div>
+                    <p>
+                        Your feedback is very important to me, so don't hesitate and contact me if you find a bug, or you have an idea for a new cool feature
+                    </p>
                     <div class="form-group">
                         <label for="contacts-type">Type</label>
                         <select id="contacts-type" class="form-control">
-                            <option value="bug">Bug</option>
                             <option value="feature">Feature</option>
+                            <option value="bug">Bug</option>
+                            <option value="other">Other</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -159,7 +175,7 @@
 <div id="game" style="display:none"></div>
 
 </body>
-
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5a75ebe81fd12ef6"></script>
 <script src="js/lib/phaser.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="js/app.js"></script>

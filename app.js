@@ -2,6 +2,8 @@ let _ = require('lodash');
 
 let express = require('express');
 let bodyParser = require('body-parser');
+let nodemailer = require('nodemailer');
+let mg = require('nodemailer-mailgun-transport');
 
 //require p2 physics library in the server.
 let p2 = require('p2');
@@ -26,8 +28,39 @@ app.use('/images', express.static(__dirname + '/public/images'));
 app.use('/css', express.static(__dirname + '/public/css'));
 
 app.post('/send/feedback', function (request, response) {
-    console.log(request.body.type);
-    console.log(request.body.content);
+    let type = request.body.type;
+    let content = request.body.content;
+
+    if (type === 'bug' || type === 'feature' || type === 'other') {
+        if (content !== '' && content.trim()) {
+
+            let auth = {
+                auth: {
+                    api_key: 'key-5d96f686894f5908c19a501c653dfae9',
+                    domain: 'sandbox38e2cc37886942e697164b0cf8d07251.mailgun.org'
+                }
+            };
+
+            let transporter = nodemailer.createTransport(mg(auth));
+
+            let mailOptions = {
+                from: 'ar4ix8@gmail.com',
+                to: 'ar4ix8@gmail.com',
+                subject: 'XPLO.IO - ' + type.toUpperCase(),
+                text: content
+            };
+
+            transporter.sendMail(mailOptions, function (error, info) {
+                if (error) {
+                    console.log(error);
+                }
+            });
+        }
+    }
+
+    response.send({
+        status: 'success'
+    });
 });
 
 let UtilService = require('./assets/UtilService.js');
@@ -68,6 +101,14 @@ class GameService {
         this.world.on('beginContact', (e) => {
             this.onContact(e.bodyA, e.bodyB);
         });
+    }
+
+    log(msg, type) {
+        if (typeof type === 'undefined') type = 'info';
+
+        let date = new Date();
+
+        console.log(date.toLocaleString() + ' - ' + type + ': ' + msg);
     }
 
     handlePhysics() {
@@ -121,6 +162,9 @@ class GameService {
                     });
 
                     this.removable_bodies.push(grenade.body);
+
+                    grenade = this.findGrenade(id);
+                    this.grenade_list.splice(this.grenade_list.indexOf(grenade), 1);
                 }
             });
 
@@ -217,30 +261,48 @@ class GameService {
         return false;
     }
 
-    findItem(id) {
+    findItem(id, returnKey) {
+        if (typeof returnKey === 'undefined') returnKey = false;
+
         for (let i = 0; i < this.food_list.length; i++) {
             if (this.food_list[i].id === id) {
-                return this.food_list[i];
+                if (returnKey) {
+                    return i;
+                } else {
+                    return this.food_list[i];
+                }
             }
         }
 
         return false;
     }
 
-    findMine(id) {
+    findMine(id, returnKey) {
+        if (typeof returnKey === 'undefined') returnKey = false;
+
         for (let i = 0; i < this.mine_list.length; i++) {
             if (this.mine_list[i].id === id) {
-                return this.mine_list[i];
+                if (returnKey) {
+                    return i;
+                } else {
+                    return this.mine_list[i];
+                }
             }
         }
 
         return false;
     }
 
-    findGrenade(id) {
+    findGrenade(id, returnKey) {
+        if (typeof returnKey === 'undefined') returnKey = false;
+
         for (let i = 0; i < this.grenade_list.length; i++) {
             if (this.grenade_list[i].id === id) {
-                return this.grenade_list[i];
+                if (returnKey) {
+                    return i;
+                } else {
+                    return this.grenade_list[i];
+                }
             }
         }
 
@@ -282,7 +344,7 @@ class GameService {
         }
 
         if (!object) {
-            console.log("could not find object");
+            this.log("Could not find object", 'error');
             return false;
         }
 
@@ -296,6 +358,14 @@ class GameService {
             if (object.type === 'shield-pickup') {
                 if (player.shield < this.properties.max_shield) {
                     player.shield += 1;
+
+                    player.body.removeShape(player.shape);
+
+                    player.shape = new p2.Circle({
+                        radius: ((player.size + player.shield) / 2)
+                    });
+
+                    player.body.addShape(player.shape);
                 }
 
                 socket.emit("gained", {
@@ -320,7 +390,7 @@ class GameService {
 
             player.score++;
 
-            this.food_list.splice(this.food_list.indexOf(object), 1);
+            this.food_list.splice(this.findItem(object.id, true), 1);
 
             this.io.emit('item-remove', object);
 
@@ -329,7 +399,7 @@ class GameService {
             let killer = game.findPlayer(object.user_id);
 
             if (!player) {
-                console.log('could not find player and killer');
+                this.log('Could not find player and killer', 'error');
                 return false;
             }
 
@@ -351,7 +421,8 @@ class GameService {
                 });
 
                 socket.emit("killed", {
-                    start_time: player.start_time
+                    start_time: player.start_time,
+                    score: player.score,
                 });
 
                 if (killer) {
@@ -371,9 +442,9 @@ class GameService {
             }
 
             if (object.type === 'mine') {
-                this.mine_list.splice(this.mine_list.indexOf(object), 1);
+                this.mine_list.splice(this.findMine(object.id, true), 1);
             } else if (object.type === 'grenade') {
-                this.grenade_list.splice(this.grenade_list.indexOf(object), 1);
+                this.grenade_list.splice(this.findGrenade(object.id, true), 1);
             }
 
             this.removable_bodies.push(objectBody);
@@ -383,8 +454,8 @@ class GameService {
 
 class FoodObject {
     constructor(max_x, max_y, color, type, id) {
-        this.x = UtilService.getRandomInt(10, max_x - 10);
-        this.y = UtilService.getRandomInt(10, max_y - 10);
+        this.x = UtilService.getRandomInt(1000, max_x);
+        this.y = UtilService.getRandomInt(1000, max_y);
         this.type = type;
         this.id = id;
         this.color = color;
@@ -393,6 +464,7 @@ class FoodObject {
         this.powerup = false;
 
         this.body = null;
+        this.shape = null;
 
         this.createBody();
     }
@@ -405,9 +477,11 @@ class FoodObject {
             collisionResponse: false
         });
 
-        this.body.addShape(new p2.Circle({
-            radius: (this.size / 2)
-        }));
+        this.shape = new p2.Circle({
+            radius: (this.size + this.line_size / 2)
+        });
+
+        this.body.addShape(this.shape);
 
         this.body.game = {
             id: this.id,
@@ -453,6 +527,7 @@ class Player {
         this.type = 'player';
 
         this.body = false;
+        this.shape = false;
 
         //We need to intilaize with true.
         this.sendData = true;
@@ -474,9 +549,11 @@ class Player {
             collisionResponse: false
         });
 
-        this.body.addShape(new p2.Circle({
-            radius: (this.size + (this.shield / 2))
-        }));
+        this.shape = new p2.Circle({
+            radius: ((this.size + this.shield) / 2)
+        });
+
+        this.body.addShape(this.shape);
 
         this.body.game = {
             id: this.id,
@@ -556,13 +633,13 @@ setInterval(() => {
 }, 1000 / 60);
 
 io.sockets.on('connection', function (socket) {
-    console.log("socket connected");
+    game.log("Client connected");
 
     socket.emit('connected');
 
     // listen for disconnection;
     socket.on('disconnect', function () {
-        console.log('disconnect');
+        game.log('Client disconnected');
 
         let removePlayer = game.findPlayer(this.id);
 
@@ -570,7 +647,7 @@ io.sockets.on('connection', function (socket) {
             game.player_list.splice(game.player_list.indexOf(removePlayer), 1);
         }
 
-        console.log("removing player " + this.id);
+        game.log("Removing player " + this.id);
 
         //send message to every connected client except the sender
         this.broadcast.emit('remove-player', {
@@ -580,15 +657,19 @@ io.sockets.on('connection', function (socket) {
     });
 
     // listen for new player
-    socket.on("new_player", function (data) {
+    socket.on("new-player", function (data) {
+        if (typeof data.username === 'undefined') {
+            game.log('Corrupted data in new-player event - ' + JSON.stringify(data));
+        }
+
         //get some random coordinates
         let randomX = UtilService.getRandomInt(2000, (game.properties.width - 2000));
         let randomY = UtilService.getRandomInt(2000, (game.properties.width - 2000));
 
         //new player instance
-        let newPlayer = new Player(this.id, data.username, randomX, randomY, data.angle);
+        let newPlayer = new Player(this.id, data.username, randomX, randomY, 0);
 
-        console.log("created new player with id " + this.id);
+        game.log("Created new player with id " + this.id);
 
         newPlayer.id = this.id;
 
@@ -633,8 +714,6 @@ io.sockets.on('connection', function (socket) {
                 shield: existingPlayer.shield
             };
 
-            console.log("pushing player");
-
             //send message to the sender-client only
             this.emit("new-enemy", existingPlayerInfo);
         }
@@ -650,7 +729,23 @@ io.sockets.on('connection', function (socket) {
     });
 
     //listen for new player inputs.
-    socket.on("input_fired", function (data) {
+    socket.on("move-pointer", function (data) {
+        if (typeof data.pointer_x === 'undefined') {
+            game.log('Corrupted data in move-pointer event - ' + JSON.stringify(data));
+        }
+
+        if (typeof data.pointer_y === 'undefined') {
+            game.log('Corrupted data in move-pointer event - ' + JSON.stringify(data));
+        }
+
+        if (typeof data.pointer_worldx === 'undefined') {
+            game.log('Corrupted data in move-pointer event - ' + JSON.stringify(data));
+        }
+
+        if (typeof data.pointer_worldy === 'undefined') {
+            game.log('Corrupted data in move-pointer event - ' + JSON.stringify(data));
+        }
+
         let movePlayer = game.findPlayer(this.id, this.room);
 
         if (!movePlayer || movePlayer.dead) {
@@ -686,6 +781,25 @@ io.sockets.on('connection', function (socket) {
             movePlayer.body.angle = PositionService.moveToPointer(movePlayer, movePlayer.speed, serverPointer);
         }
 
+        let x = movePlayer.body.position[0];
+        let y = movePlayer.body.position[1];
+
+        if (x <= 1000) {
+            movePlayer.body.position[0] = 1000
+        }
+
+        if (y <= 1000) {
+            movePlayer.body.position[1] = 1000
+        }
+
+        if (x >= game.properties.height) {
+            movePlayer.body.position[0] = game.properties.height;
+        }
+
+        if (y >= game.properties.width) {
+            movePlayer.body.position[1] = game.properties.width;
+        }
+
         movePlayer.x = movePlayer.body.position[0];
         movePlayer.y = movePlayer.body.position[1];
 
@@ -714,6 +828,10 @@ io.sockets.on('connection', function (socket) {
     });
 
     socket.on('drop-mine', function (data) {
+        if (typeof data.id === 'undefined') {
+            game.log('Corrupted data in drop-mine event - ' + JSON.stringify(data));
+        }
+
         let player = game.findPlayer(this.id);
 
         if (!player) {
@@ -723,8 +841,7 @@ io.sockets.on('connection', function (socket) {
         let mine = player.findMine(data.id);
 
         if (!mine) {
-            console.log(data);
-            console.log("could not find mine");
+            game.log("Could not find mine - " + JSON.stringify(data), 'error');
             return false;
         }
 
@@ -752,6 +869,10 @@ io.sockets.on('connection', function (socket) {
     });
 
     socket.on('throw-grenade', function (data) {
+        if (typeof data.id === 'undefined') {
+            game.log('Corrupted data in throw-grenade event - ' + JSON.stringify(data));
+        }
+
         let player = game.findPlayer(this.id);
 
         if (!player) {
@@ -761,8 +882,7 @@ io.sockets.on('connection', function (socket) {
         let grenade = player.findGrenade(data.id);
 
         if (!grenade) {
-            console.log(data);
-            console.log("could not find grenade");
+            game.log("Could not find grenade - " + JSON.stringify(data), 'error');
             return false;
         }
 
@@ -816,4 +936,4 @@ io.sockets.on('connection', function (socket) {
 
 server.listen(process.env.PORT || 2000);
 
-console.log("Server started.");
+game.log("Server started.");

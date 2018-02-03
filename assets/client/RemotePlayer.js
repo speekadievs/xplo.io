@@ -1,5 +1,5 @@
 class RemotePlayer {
-    constructor(id, startx, starty, startSize, start_angle, color, shield, engine, socket){
+    constructor(id, username, startx, starty, startSize, start_angle, color, shield, engine, socket){
         this.x = startx;
         this.y = starty;
 
@@ -31,6 +31,28 @@ class RemotePlayer {
         this.player.body.clearShapes();
         this.player.body.addCircle((this.player.body_size + (shield / 2)), 0, 0);
         this.player.body.data.shapes[0].sensor = true;
+
+        let style = {
+            font: "14px Arial",
+            fill: "#ffffff",
+            stroke: '#000000',
+            strokeThickness: 4,
+            wordWrap: true,
+            wordWrapWidth: this.player.width,
+            align: "center"
+        };
+
+        if(username.length > 30){
+            username = username.substr(0, 27)+'...';
+        }
+
+        this.text = engine.add.text(startx, starty, username, style);
+
+        this.text.anchor.set(0.5);
+    }
+
+    updateTextPos(){
+        this.text.position.copyFrom(this.player.position);
     }
 }
 

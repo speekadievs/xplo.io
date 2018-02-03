@@ -9,8 +9,8 @@ class GameService {
         this.backgroundSprite = null;
 
         this.properties = {
-            gameWidth: 20000,
-            gameHeight: 20000,
+            gameWidth: 12000,
+            gameHeight: 12000,
             game_element: "game",
             in_game: false,
             started: false,
@@ -32,6 +32,11 @@ class GameService {
         this.can_launch = true;
 
         this.leaderboard_interval = null;
+
+        this.bounds = null;
+        this.customBounds = null;
+
+
     }
 
     onConnected() {
@@ -43,11 +48,8 @@ class GameService {
         this.explision_group = this.engine.add.group();
 
         // send the server our initial position and tell it we are connected
-        this.socket.emit('new_player', {
-            x: 0,
-            y: 0,
-            angle: 0,
-            username: username
+        this.socket.emit('new-player', {
+            username: username ? username : ''
         });
     }
 
@@ -110,11 +112,17 @@ class GameService {
             align: "center"
         };
 
+        if(data.username.length > 30){
+            data.username = username.substr(0, 27)+'...';
+        }
+
         player.text = this.engine.add.text(data.x, data.y, data.username, style);
 
         player.text.anchor.set(0.5);
 
-        //this.engine.physics.p2.enableBody(player.text);
+        player.updateTextPos = function () {
+            this.text.position.copyFrom(this.position);
+        };
 
         player.body_size = data.size;
 
@@ -432,7 +440,7 @@ class GameService {
     }
 
     newEnemy(data) {
-        let newEnemy = new RemotePlayer(data.id, data.x, data.y, data.size, data.angle, data.color, data.shield, this.engine, this.socket);
+        let newEnemy = new RemotePlayer(data.id, data.username, data.x, data.y, data.size, data.angle, data.color, data.shield, this.engine, this.socket);
 
         this.enemies.push(newEnemy);
     }
@@ -674,6 +682,7 @@ class GameService {
             return;
         }
 
+        removePlayer.text.destroy();
         removePlayer.player.destroy();
         this.enemies.splice(this.enemies.indexOf(removePlayer), 1);
     }
@@ -694,9 +703,18 @@ class GameService {
         });
     }
 
-    onKilled() {
+    onKilled(data) {
         if (player) {
+            player.text.destroy();
             player.destroy();
+
+            let deadBlock = jQuery('#dead');
+            deadBlock.find('.score').text(data.score);
+
+            let aliveTime = (new Date()).getTime() - data.start_time;
+            let formatted = moment.utc(aliveTime).format('HH:mm:ss');
+
+            deadBlock.find('.time').text(formatted);
 
             setTimeout(() => {
                 this.restart();
@@ -734,6 +752,8 @@ class GameService {
             item.item.destroy();
         });
         this.grenade_list = [];
+
+        this.item_group.destroy();
 
         this.leaderboard.destroy();
         this.shield_box.destroy();
