@@ -632,6 +632,15 @@ setInterval(() => {
     game.heartbeat()
 }, 1000 / 60);
 
+//Run garbage collector every 30 seconds
+setInterval(() => {
+    if (global.gc) {
+        global.gc();
+    } else {
+        console.log('Garbage collection unavailable.  Pass --expose-gc when launching node to enable forced garbage collection.');
+    }
+}, 30000);
+
 io.sockets.on('connection', function (socket) {
     game.log("Client connected");
 
