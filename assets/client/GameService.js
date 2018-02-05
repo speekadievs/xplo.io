@@ -43,6 +43,7 @@ class GameService {
         console.log("connected to server");
 
         this.properties.in_game = true;
+        //this.properties.started = false;
 
         this.item_group = this.engine.add.group();
         this.explision_group = this.engine.add.group();

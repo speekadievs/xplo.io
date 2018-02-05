@@ -19,13 +19,17 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
+app.use('/js', express.static(__dirname + '/public/js'));
+app.use('/images', express.static(__dirname + '/public/images'));
+app.use('/css', express.static(__dirname + '/public/css'));
+
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/public/index.html');
 });
 
-app.use('/js', express.static(__dirname + '/public/js'));
-app.use('/images', express.static(__dirname + '/public/images'));
-app.use('/css', express.static(__dirname + '/public/css'));
+app.get('/privacy', function (req, res) {
+    res.sendFile(__dirname + '/public/privacy.html');
+});
 
 app.post('/send/feedback', function (request, response) {
     let type = request.body.type;
@@ -353,6 +357,10 @@ class GameService {
         }
 
         let socket = this.io.sockets.connected[player.id];
+
+        if (!socket) {
+            return false;
+        }
 
         if (object.type !== 'mine' && object.type !== 'grenade') {
             if (object.type === 'shield-pickup') {

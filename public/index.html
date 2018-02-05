@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="The most explosive game. Blow up other players and stay alive as long as possible">
-    <meta name="author" content="Artūrs Lukjaņenoks">
+    <meta name="description"
+          content="The most explosive game. Blow up other players and stay alive as long as possible">
     <title>Xplo.io</title>
     <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css">
     <link rel="stylesheet" type="text/css"
@@ -16,13 +16,15 @@
     <meta property="og:url" content="http://xplo.io"/>
     <meta property="og:type" content="website"/>
     <meta property="og:title" content="Xplo.io"/>
-    <meta property="og:description" content="The most explosive game. Blow up other players and stay alive as long as possible"/>
+    <meta property="og:description"
+          content="The most explosive game. Blow up other players and stay alive as long as possible"/>
     <meta property="og:image" content="http://xplo.io/images/social_big.png"/>
 
     <meta name="twitter:card" content="summary">
     <meta name="twitter:site" content="@xplo_io">
     <meta name="twitter:title" content="Xplo.io">
-    <meta name="twitter:description" content="The most explosive game. Blow up other players and stay alive as long as possible">
+    <meta name="twitter:description"
+          content="The most explosive game. Blow up other players and stay alive as long as possible">
     <meta name="twitter:image" content="http://xplo.io/images/social_big.png">
 
     <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
@@ -37,7 +39,11 @@
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113447093-1"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
         gtag('js', new Date());
 
         gtag('config', 'UA-113447093-1');
@@ -45,18 +51,66 @@
 </head>
 <body>
 
+<div id="fb-root"></div>
+<script>
+    (function (d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s);
+        js.id = id;
+        js.src = 'https://connect.facebook.net/lv_LV/sdk.js#xfbml=1&version=v2.12&appId=349717905142442&autoLogAppEvents=1';
+        fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+</script>
+
 <div id="home" class="container h-100" style="display:none">
+    <div class="social-container">
+        <div>
+            <a href="https://twitter.com/xploiogame?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-size="large"
+               data-dnt="true" data-show-count="true">Follow @xploiogame</a>
+            <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+        </div>
+
+        <div>
+            <div class="fb-like" data-href="https://www.facebook.com/xploiogame/" data-layout="button_count"
+                 data-action="like" data-size="large" data-show-faces="true" data-share="true"></div>
+        </div>
+    </div>
+    <div class="version-container">
+        v0.1.1
+    </div>
     <div class="row h-100">
         <div class="col-md-8 offset-md-2 block align-self-center">
             <div id="connecting" class="text-center" style="margin:50px">
                 <i class="fa fa-refresh fa-spin fa-3x"></i>
                 <h2>Connecting...</h2>
             </div>
+            <div id="disconnected" class="text-center" style="display:none; margin:50px">
+                <h3>Oh no, you've disconnected</h3>
+                <i class="fa fa-refresh fa-spin fa-3x"></i>
+                <h3>Reconnecting...</h3>
+            </div>
             <div id="login" style="display:none">
                 <div class="logo text-center">
                     <img src="/images/logo.png" class="img-fluid">
                 </div>
                 <div class="col-md-6 offset-md-3">
+                    <div class="form-group text-center">
+                        <ul class="list-unstyled">
+                            <li class="tip-item" style="display:none">Eat <span style="color:#49bcff"><strong>BLUE</strong></span> orbs
+                                to increase your shield
+                            </li>
+                            <li class="tip-item" style="display:none">Eat an <span style="color:#d17732"><strong>ORANGE</strong></span>
+                                orb to get a grenade
+                            </li>
+                            <li class="tip-item" style="display:none">Eat a <span style="color:#2d4053"><strong>BLACK</strong></span> orb
+                                to get a mine
+                            </li>
+                            <li class="tip-item" style="display:none">If someone is following you, drop a mine</li>
+                            <li class="tip-item" style="display:none">Don't step on your own mines</li>
+                            <li class="tip-item" style="display:none">Stay alive as long as possible</li>
+                        </ul>
+                    </div>
                     <div class="form-group">
                         <input id="username" type="text" class="form-control form-control-lg" placeholder="Username...">
                     </div>
@@ -89,18 +143,23 @@
                 </div>
             </div>
         </div>
-        <div id="some-block" class="col-md-4 offset-md-4 block">
+        <div id="sleeping-mine" class="col-md-4 offset-md-4 block">
+            <div class="form-group text-center">
+                <small>Advertisement</small>
+            </div>
+            <div class="content">
 
+            </div>
         </div>
         <div class="col-md-8 offset-md-2 block align-self-end" style="margin-bottom:10px;">
             <div class="row">
-                <div class="col block" style="padding-top:5px">
-                    <a href="https://twitter.com/xplo_io">
-                        <i class="fa fa-twitter-square fa-3x"></i>
-                    </a>
-                </div>
                 <div class="col block">
                     <ul class="list-inline text-center" style="margin-top:15px">
+                        <li class="list-inline-item align-middle">
+                            <a href="/privacy" data-toggle="modal" data-target="#privacy" class="privacy-policy">
+                                Privacy Policy
+                            </a>
+                        </li>
                         <li class="list-inline-item align-middle">
                             <a href="#" data-toggle="modal" data-target="#contacts">Contacts</a>
                         </li>
@@ -156,6 +215,49 @@
         </div>
     </div>
 
+    <div id="privacy" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Privacy Policy</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Our servers log very basic information about each user connecting to our site, such as IP
+                        address and browser type. None of this information is associated with any identified person at
+                        the time it is collected, but it could potentially be tied to you somehow if we are required to
+                        disclose our server logs as a result of a subpoena or other legal process.
+                    </p>
+
+                    <p>
+                        We may use cookies, web beacons, or other anonymous tracking information to improve our server's
+                        interaction with your computer. Third party vendors, including Google, also use cookies to serve
+                        ads to you based on your visit to this site and/or other sites on the Internet.
+                    </p>
+
+                    <p>
+                        You may opt out of the use of Google's ad-related cookies by visiting their ad settings.
+                    </p>
+
+                    <p>
+                        For more information regarding opting out of a third party vendor's use of cookies, you can
+                        visit <a href="http://aboutads.info" target="_blank">aboutads.info</a>.
+                    </p>
+
+                    <p>
+                        We may occasionally revise our privacy policy by posting the changes here.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="changelog" class="modal fade" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -166,6 +268,12 @@
                     </button>
                 </div>
                 <div class="modal-body">
+                    <h5>v0.1.1</h5>
+                    <ul>
+                        <li>Fixed some minor connection issues</li>
+                        <li>Some minor homepage changes</li>
+                    </ul>
+                    <hr>
                     <h5>v0.1.0</h5>
                     <ul>
                         <li>First release</li>
@@ -201,7 +309,7 @@
 
 </body>
 <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5a75ebe81fd12ef6"></script>
-<script src="js/lib/phaser.js"></script>
+<script src="js/lib/phaser.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="js/app.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/js/bootstrap.min.js"></script>
@@ -213,14 +321,36 @@
 <script src="/js/adframe.js"></script>
 
 <script>
+    jQuery.fn.random = function () {
+        var ret = jQuery();
+
+        if (this.length > 0)
+            ret = ret.add(this[Math.floor((Math.random() * this.length))]);
+
+        return ret;
+    };
+
     jQuery(document).ready(function () {
         var warningShowed = localStorage.getItem('warning-showed');
 
-        if(adblock && !warningShowed){
-            //jQuery('#adblock-warning').modal('show');
+        if (adblock) {
+            jQuery('#sleeping-mine .content').html('<img src="/images/sleeping-mine.png" class="img-fluid mx-auto d-block">');
 
-            localStorage.setItem('warning-showed', true);
+            if(!warningShowed){
+                //jQuery('#adblock-warning').modal('show');
+                localStorage.setItem('warning-showed', true);
+            }
         }
+
+        jQuery('.privacy-policy').attr('href', '#');
+
+        var tipItem = jQuery('.tip-item');
+        tipItem.random().fadeIn();
+        setInterval(function () {
+            tipItem.hide();
+
+            tipItem.random().fadeIn();
+        }, 7000);
     });
 </script>
 </html>

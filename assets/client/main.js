@@ -17,7 +17,8 @@ let socket = io({
 });
 
 socket.on("connected", function () {
-    jQuery('#connecting').fadeOut();
+    jQuery('#disconnected').hide();
+    jQuery('#connecting').hide();
     jQuery('#login').fadeIn();
 
     let engine = new Phaser.Game((window.innerWidth * window.devicePixelRatio), (window.innerHeight * window.devicePixelRatio), Phaser.CANVAS, 'game');
@@ -148,6 +149,17 @@ socket.on("connected", function () {
 
                 socket.on('get-leaderboard', function (data) {
                     game.onGetLeaderboard(data);
+                });
+
+                socket.on('disconnect', function(){
+                    game.restart();
+
+                    game.engine.state.start('BlankStage', true);
+
+                    jQuery('#game').fadeOut();
+                    jQuery('#home').fadeIn();
+                    jQuery('#login').hide();
+                    jQuery('#disconnected').fadeIn();
                 });
             }
         },
