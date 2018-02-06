@@ -177,7 +177,7 @@ socket.on("connected", function () {
 
                 //we're making a new mouse pointer and sending this input to
                 //the server.
-                let pointer = engine.input.mousePointer;
+                let pointer = engine.input.activePointer;
 
                 //Send a new position data to the server
                 socket.emit('move-pointer', {

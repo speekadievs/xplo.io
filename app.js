@@ -961,4 +961,5 @@ io.sockets.on('connection', function (socket) {
 
 server.listen(process.env.PORT || 2000);
 
+game.log("----------------------------");
 game.log("Server started.");

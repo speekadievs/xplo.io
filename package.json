@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "xplo.io",
-  "version": "1.0.0",
+  "version": "0.1.2",
   "description": "",
   "main": "app.js",
   "scripts": {
