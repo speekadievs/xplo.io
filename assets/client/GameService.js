@@ -7,6 +7,7 @@ let GrenadeObject = require('./GrenadeObject.js');
 class GameService {
     constructor(engine, socket) {
         this.backgroundSprite = null;
+        this.arenaSprite = null;
 
         this.properties = {
             gameWidth: 12000,
@@ -14,6 +15,7 @@ class GameService {
             game_element: "game",
             in_game: false,
             started: false,
+            disconnected: false,
         };
 
         this.enemies = [];

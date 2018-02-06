@@ -4,8 +4,8 @@ html {
 
 body {
     margin: 0;
-    background: url("/images/bg-white-2.png") repeat;
-    box-shadow: inset 0 0 0 1000px rgba(0, 0, 0, .2);
+    background: url("/images/bg.png") repeat;
+    /*box-shadow: inset 0 0 0 1000px rgba(0, 0, 0, .2);*/
     height: 100%;
 }
 

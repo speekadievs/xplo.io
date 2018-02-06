@@ -8,6 +8,7 @@ jQuery('#home').fadeIn();
 
 window.player = null;
 window.username = '';
+window.disconnected = false;
 
 let GameService = require('./GameService.js');
 
@@ -17,6 +18,10 @@ let socket = io({
 });
 
 socket.on("connected", function () {
+    if (disconnected) {
+        return false;
+    }
+
     jQuery('#disconnected').hide();
     jQuery('#connecting').hide();
     jQuery('#login').fadeIn();
@@ -52,7 +57,8 @@ socket.on("connected", function () {
             //game.physics.p2.setImpactEvents(true);
 
 
-            engine.load.image('bg', '/images/bg-white-2.png');
+            engine.load.image('bg', '/images/bg.png');
+            engine.load.image('arena', '/images/arena.png');
             engine.load.image('shield', '/images/shield.png');
             engine.load.spritesheet('explosion', '/images/explosion.png', 128, 128);
             //engine.load.image('doge', '/images/doge.jpg');
@@ -66,6 +72,7 @@ socket.on("connected", function () {
             this.game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);
 
             game.backgroundSprite = engine.add.tileSprite(0, 0, game.properties.gameWidth, game.properties.gameHeight, 'bg');
+            game.arenaSprite = engine.add.tileSprite(1000, 1000, game.properties.gameWidth - 3000, game.properties.gameHeight - 3000, 'arena');
 
             game.onConnected();
 
@@ -151,10 +158,8 @@ socket.on("connected", function () {
                     game.onGetLeaderboard(data);
                 });
 
-                socket.on('disconnect', function(){
-                    game.restart();
-
-                    game.engine.state.start('BlankStage', true);
+                socket.on('disconnect', function () {
+                    window.disconnected = true;
 
                     jQuery('#game').fadeOut();
                     jQuery('#home').fadeIn();
@@ -292,6 +297,10 @@ socket.on("connected", function () {
         jQuery('#home').fadeIn();
         jQuery('#dead').hide();
         jQuery('#login').fadeIn();
+    });
+
+    jQuery(document).on('click', '#reconnect', function () {
+        window.location.reload();
     });
 
     jQuery(document).on('change', '#username', function () {

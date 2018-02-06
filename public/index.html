@@ -80,7 +80,7 @@
         </div>
     </div>
     <div class="version-container">
-        v0.1.1
+        v0.1.2
     </div>
     <div class="cross-promote">
         <iframe id="IOG_CP" scrolling="no" frameborder="0" width="200"
@@ -102,9 +102,10 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
                 <h2>Connecting...</h2>
             </div>
             <div id="disconnected" class="text-center" style="display:none; margin:50px">
-                <h3>Oh no, you've disconnected</h3>
-                <i class="fa fa-refresh fa-spin fa-3x"></i>
-                <h3>Reconnecting...</h3>
+                <h3>Oh no, you've disconnected from the server</h3>
+                <button id="reconnect" type="button" class="btn btn-primary">
+                    Reconnect
+                </button>
             </div>
             <div id="login" style="display:none">
                 <div class="logo text-center">
@@ -284,6 +285,12 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
                     </button>
                 </div>
                 <div class="modal-body">
+                    <h5>v0.1.2</h5>
+                    <ul>
+                        <li>Added arena bounds</li>
+                        <li>Added disconnection handler</li>
+                    </ul>
+                    <hr>
                     <h5>v0.1.1</h5>
                     <ul>
                         <li>Fixed some minor connection issues</li>

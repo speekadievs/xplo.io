@@ -16289,6 +16289,7 @@ jQuery('#home').fadeIn();
 
 window.player = null;
 window.username = '';
+window.disconnected = false;
 
 var GameService = __webpack_require__(125);
 
@@ -16298,6 +16299,10 @@ var socket = io({
 });
 
 socket.on("connected", function () {
+    if (disconnected) {
+        return false;
+    }
+
     jQuery('#disconnected').hide();
     jQuery('#connecting').hide();
     jQuery('#login').fadeIn();
@@ -16333,7 +16338,8 @@ socket.on("connected", function () {
             //game.physics.p2.setImpactEvents(true);
 
 
-            engine.load.image('bg', '/images/bg-white-2.png');
+            engine.load.image('bg', '/images/bg.png');
+            engine.load.image('arena', '/images/arena.png');
             engine.load.image('shield', '/images/shield.png');
             engine.load.spritesheet('explosion', '/images/explosion.png', 128, 128);
             //engine.load.image('doge', '/images/doge.jpg');
@@ -16347,6 +16353,7 @@ socket.on("connected", function () {
             this.game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);
 
             game.backgroundSprite = engine.add.tileSprite(0, 0, game.properties.gameWidth, game.properties.gameHeight, 'bg');
+            game.arenaSprite = engine.add.tileSprite(1000, 1000, game.properties.gameWidth - 3000, game.properties.gameHeight - 3000, 'arena');
 
             game.onConnected();
 
@@ -16433,9 +16440,7 @@ socket.on("connected", function () {
                 });
 
                 socket.on('disconnect', function () {
-                    game.restart();
-
-                    game.engine.state.start('BlankStage', true);
+                    window.disconnected = true;
 
                     jQuery('#game').fadeOut();
                     jQuery('#home').fadeIn();
@@ -16572,6 +16577,10 @@ socket.on("connected", function () {
         jQuery('#home').fadeIn();
         jQuery('#dead').hide();
         jQuery('#login').fadeIn();
+    });
+
+    jQuery(document).on('click', '#reconnect', function () {
+        window.location.reload();
     });
 
     jQuery(document).on('change', '#username', function () {
@@ -27177,13 +27186,15 @@ var GameService = function () {
         _classCallCheck(this, GameService);
 
         this.backgroundSprite = null;
+        this.arenaSprite = null;
 
         this.properties = {
             gameWidth: 12000,
             gameHeight: 12000,
             game_element: "game",
             in_game: false,
-            started: false
+            started: false,
+            disconnected: false
         };
 
         this.enemies = [];
@@ -27213,7 +27224,7 @@ var GameService = function () {
             console.log("connected to server");
 
             this.properties.in_game = true;
-            this.properties.started = false;
+            //this.properties.started = false;
 
             this.item_group = this.engine.add.group();
             this.explision_group = this.engine.add.group();

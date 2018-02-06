@@ -23,6 +23,10 @@ app.use('/js', express.static(__dirname + '/public/js'));
 app.use('/images', express.static(__dirname + '/public/images'));
 app.use('/css', express.static(__dirname + '/public/css'));
 
+app.get('/favicon.ico', function (req, res) {
+    res.sendFile(__dirname + '/public/favicon.ico');
+});
+
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/public/index.html');
 });
@@ -686,7 +690,11 @@ io.sockets.on('connection', function (socket) {
         //new player instance
         let newPlayer = new Player(this.id, data.username, randomX, randomY, 0);
 
-        game.log("Created new player with id " + this.id);
+        if (data.username) {
+            game.log("Created new player with id " + this.id + " and username " + data.username);
+        } else {
+            game.log("Created new player with id " + this.id);
+        }
 
         newPlayer.id = this.id;
 
