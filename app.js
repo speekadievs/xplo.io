@@ -91,7 +91,7 @@ class GameService {
         this.properties = {
             max_food: 1500,
             max_mines: 200,
-            max_grenades: 100,
+            max_grenades: 50,
             height: 10000,
             width: 10000,
             food_color: '0x49bcff',
@@ -466,8 +466,8 @@ class GameService {
 
 class FoodObject {
     constructor(max_x, max_y, color, type, id) {
-        this.x = UtilService.getRandomInt(1000, max_x);
-        this.y = UtilService.getRandomInt(1000, max_y);
+        this.x = UtilService.getRandomInt(1010, max_x - 10);
+        this.y = UtilService.getRandomInt(1010, max_y - 10);
         this.type = type;
         this.id = id;
         this.color = color;

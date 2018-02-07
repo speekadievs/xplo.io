@@ -115,8 +115,8 @@ class GameService {
             align: "center"
         };
 
-        if(data.username.length > 30){
-            data.username = username.substr(0, 27)+'...';
+        if (data.username.length > 30) {
+            data.username = username.substr(0, 27) + '...';
         }
 
         player.text = this.engine.add.text(data.x, data.y, data.username, style);
@@ -489,6 +489,10 @@ class GameService {
     }
 
     onEnemyMove(data) {
+        if (!this.properties.in_game) {
+            return false;
+        }
+
         let movePlayer = this.findPlayer(data.id);
 
         if (!movePlayer) {
@@ -556,6 +560,10 @@ class GameService {
     }
 
     onExplosion(data) {
+        if (!this.properties.in_game) {
+            return false;
+        }
+
         let object = false;
 
         if (data.type === 'mine') {
@@ -608,12 +616,20 @@ class GameService {
     }
 
     onMineUpdate(data) {
+        if (!this.properties.in_game) {
+            return false;
+        }
+
         data.forEach(mine => {
             this.mine_list.push(new MineObject(mine.id, mine.x, mine.y, mine.color, mine.size, mine.line_size, mine.user_id, this.engine));
         });
     }
 
     onMineRemove(data) {
+        if (!this.properties.in_game) {
+            return false;
+        }
+
         let removeItem = this.findMine(data.id);
 
         if (!removeItem) {
@@ -628,6 +644,10 @@ class GameService {
     }
 
     onGrenadeUpdate(data) {
+        if (!this.properties.in_game) {
+            return false;
+        }
+
         data.forEach(grenade => {
             this.grenade_list.push(new GrenadeObject(grenade.id, grenade.x, grenade.y, grenade.color, grenade.size, grenade.line_size, grenade.user_id, this.engine));
         });
@@ -654,6 +674,10 @@ class GameService {
     }
 
     onItemUpdate(data) {
+        if (!this.properties.in_game) {
+            return false;
+        }
+
         data.forEach(item => {
             this.food_list.push(new FoodObject(item.id, item.type, item.x, item.y, item.color, item.size, item.line_size, this));
         });
