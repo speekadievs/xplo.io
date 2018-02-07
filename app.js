@@ -809,20 +809,22 @@ io.sockets.on('connection', function (socket) {
         let x = movePlayer.body.position[0];
         let y = movePlayer.body.position[1];
 
-        if (x <= 1000) {
-            movePlayer.body.position[0] = 1000
+        let radius = movePlayer.size + (movePlayer.shield / 2);
+
+        if (x <= (1000  + radius)) {
+            movePlayer.body.position[0] = 1000  + radius;
         }
 
-        if (y <= 1000) {
-            movePlayer.body.position[1] = 1000
+        if (y <= (1000 + radius)) {
+            movePlayer.body.position[1] = 1000 + radius;
         }
 
-        if (x >= game.properties.height) {
-            movePlayer.body.position[0] = game.properties.height;
+        if (x >= (game.properties.height - radius)) {
+            movePlayer.body.position[0] = game.properties.height - radius;
         }
 
-        if (y >= game.properties.width) {
-            movePlayer.body.position[1] = game.properties.width;
+        if (y >= (game.properties.width - radius)) {
+            movePlayer.body.position[1] = game.properties.width - radius;
         }
 
         movePlayer.x = movePlayer.body.position[0];
