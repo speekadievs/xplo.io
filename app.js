@@ -90,8 +90,8 @@ class GameService {
 
         this.properties = {
             max_food: 1500,
-            max_mines: 200,
-            max_grenades: 50,
+            max_mines: 50,
+            max_grenades: 100,
             height: 10000,
             width: 10000,
             food_color: '0x49bcff',
