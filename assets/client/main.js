@@ -179,13 +179,15 @@ socket.on("connected", function () {
                 //the server.
                 let pointer = engine.input.activePointer;
 
-                //Send a new position data to the server
-                socket.emit('move-pointer', {
-                    pointer_x: pointer.x,
-                    pointer_y: pointer.y,
-                    pointer_worldx: pointer.worldX,
-                    pointer_worldy: pointer.worldY,
-                });
+                if (!document.hidden) {
+                    //Send a new position data to the server
+                    socket.emit('move-pointer', {
+                        pointer_x: pointer.x,
+                        pointer_y: pointer.y,
+                        pointer_worldx: pointer.worldX,
+                        pointer_worldy: pointer.worldY,
+                    });
+                }
 
                 if (player) {
                     player.updateTextPos();
@@ -257,6 +259,10 @@ socket.on("connected", function () {
 
                 if (game.grenade_box) {
                     engine.world.bringToTop(game.grenade_box);
+                }
+
+                if (game.map_group) {
+                    engine.world.bringToTop(game.map_group);
                 }
             }
         },

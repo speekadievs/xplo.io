@@ -86,7 +86,7 @@
         </div>
     </div>
     <div class="version-container">
-        v0.1.4
+        v0.1.5
     </div>
     <div class="cross-promote">
         <iframe id="IOG_CP" scrolling="no" frameborder="0" width="200"
@@ -120,18 +120,22 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
                 <div class="col-md-6 offset-md-3">
                     <div class="form-group text-center">
                         <ul class="list-unstyled">
-                            <li class="tip-item" style="display:none">Eat <span style="color:#49bcff"><strong>BLUE</strong></span> orbs
+                            <li class="tip-item" style="display:none">Eat <span
+                                    style="color:#49bcff"><strong>BLUE</strong></span> orbs
                                 to increase your shield
                             </li>
-                            <li class="tip-item" style="display:none">Eat an <span style="color:#d17732"><strong>ORANGE</strong></span>
+                            <li class="tip-item" style="display:none">Eat an <span
+                                    style="color:#d17732"><strong>ORANGE</strong></span>
                                 orb to get a grenade
                             </li>
-                            <li class="tip-item" style="display:none">Eat a <span style="color:#2d4053"><strong>BLACK</strong></span> orb
+                            <li class="tip-item" style="display:none">Eat a <span
+                                    style="color:#2d4053"><strong>BLACK</strong></span> orb
                                 to get a mine
                             </li>
                             <li class="tip-item" style="display:none">If someone is following you, drop a mine</li>
                             <li class="tip-item" style="display:none">Don't step on your own mines</li>
                             <li class="tip-item" style="display:none">Stay alive as long as possible</li>
+                            <li class="tip-item" style="display:none">Mines are more powerful than grenades</li>
                         </ul>
                     </div>
                     <div class="form-group">
@@ -167,12 +171,12 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
             </div>
         </div>
         <!--<div id="sleeping-mine" class="col-md-4 offset-md-4 block" style="display:none">-->
-            <!--<div class="form-group text-center">-->
-                <!--<small>Advertisement</small>-->
-            <!--</div>-->
-            <!--<div class="content">-->
+        <!--<div class="form-group text-center">-->
+        <!--<small>Advertisement</small>-->
+        <!--</div>-->
+        <!--<div class="content">-->
 
-            <!--</div>-->
+        <!--</div>-->
         <!--</div>-->
         <div class="col-md-8 offset-md-2 block align-self-end" style="margin-bottom:10px;">
             <div class="row">
@@ -291,6 +295,13 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
                     </button>
                 </div>
                 <div class="modal-body">
+                    <h5>v0.1.5</h5>
+                    <ul>
+                        <li>Added mini map</li>
+                        <li>Added current score box</li>
+                        <li>Small bugfixes</li>
+                    </ul>
+                    <hr>
                     <h5>v0.1.4</h5>
                     <ul>
                         <li>Decreased mine pickups</li>
@@ -377,7 +388,7 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
         if (adblock) {
             jQuery('#sleeping-mine .content').html('<img src="/images/sleeping-mine.png" class="img-fluid mx-auto d-block">');
 
-            if(!warningShowed){
+            if (!warningShowed) {
                 //jQuery('#adblock-warning').modal('show');
                 localStorage.setItem('warning-showed', true);
             }

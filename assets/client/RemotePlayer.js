@@ -1,5 +1,5 @@
 class RemotePlayer {
-    constructor(id, username, startx, starty, startSize, start_angle, color, shield, engine, socket){
+    constructor(id, username, startx, starty, startSize, start_angle, color, shield, game, socket) {
         this.x = startx;
         this.y = starty;
 
@@ -7,7 +7,7 @@ class RemotePlayer {
         this.id = id;
         this.angle = start_angle;
 
-        this.player = engine.add.graphics(this.x, this.y);
+        this.player = game.engine.add.graphics(this.x, this.y);
 
         //initialize the size with the server value
         this.player.radius = startSize;
@@ -27,10 +27,20 @@ class RemotePlayer {
         this.player.shield = shield;
 
         // draw a shape
-        engine.physics.p2.enableBody(this.player);
+        game.engine.physics.p2.enableBody(this.player);
         this.player.body.clearShapes();
         this.player.body.addCircle((this.player.body_size + (shield / 2)), 0, 0);
         this.player.body.data.shapes[0].sensor = true;
+
+        // add player to map
+
+        if (game.map_group) {
+            this.map = game.engine.add.graphics(0, 0, game.map_group);
+            this.map.beginFill(0xFF0000);
+            this.map.drawCircle(0, 0, 5);
+            this.map.endFill();
+            this.map.anchor.setTo(0.5, 0.5);
+        }
 
         let style = {
             font: "14px Arial",
@@ -42,16 +52,16 @@ class RemotePlayer {
             align: "center"
         };
 
-        if(username.length > 30){
-            username = username.substr(0, 27)+'...';
+        if (username.length > 30) {
+            username = username.substr(0, 27) + '...';
         }
 
-        this.text = engine.add.text(startx, starty, username, style);
+        this.text = game.engine.add.text(startx, starty, username, style);
 
         this.text.anchor.set(0.5);
     }
 
-    updateTextPos(){
+    updateTextPos() {
         this.text.position.copyFrom(this.player.position);
     }
 }

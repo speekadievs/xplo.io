@@ -29,6 +29,7 @@ class GameService {
         this.shield_box = null;
         this.mine_box = null;
         this.grenade_box = null;
+        this.rank_box = null;
 
         this.can_drop = true;
         this.can_launch = true;
@@ -38,7 +39,7 @@ class GameService {
         this.bounds = null;
         this.customBounds = null;
 
-
+        this.map_group = null;
     }
 
     onConnected() {
@@ -54,6 +55,26 @@ class GameService {
         this.socket.emit('new-player', {
             username: username ? username : ''
         });
+    }
+
+    createMiniMap() {
+        this.map_group = this.engine.add.group();
+
+        this.map_group.fixedToCamera = true;
+        this.map_group.cameraOffset.setTo((window.innerWidth * window.devicePixelRatio) - 220, (window.innerHeight * window.devicePixelRatio) - 220);
+
+        let map = this.engine.add.graphics(0, 0, this.map_group);
+
+        // set a fill and line style
+        map.beginFill(0x000000);
+        map.drawRoundedRect(0, 0, 200, 200, 5);
+        map.alpha = 0.5;
+
+        player.map = this.engine.add.graphics(0, 0, this.map_group);
+        player.map.beginFill(0x00FF00);
+        player.map.drawCircle(0, 0, 5);
+        player.map.endFill();
+        player.map.anchor.setTo(0.5, 0.5);
     }
 
     launchExplosion(x, y) {
@@ -231,7 +252,28 @@ class GameService {
         this.grenade_box.text.boundsAlignV = 'middle';
         this.grenade_box.text.boundsAlignH = 'center';
 
+        //Create rank box
+        this.rank_box = this.engine.add.group();
+        this.rank_box.fixedToCamera = true;
+        this.rank_box.cameraOffset.setTo(20, (window.innerHeight * window.devicePixelRatio) - 60);
+
+        let rankBox = this.engine.add.graphics(0, 0, this.rank_box);
+        rankBox.beginFill(0x000000);
+        rankBox.drawRoundedRect(0, 0, 120, 40, 5);
+        rankBox.alpha = 0.5;
+
+        this.rank_box.text = this.engine.add.text(0, 0, '', {
+            font: "15px Arial",
+            fill: "#ffffff",
+            align: "center"
+        }, this.rank_box);
+        this.rank_box.text.setTextBounds(10, 5, 120, 40);
+        this.rank_box.text.boundsAlignV = 'middle';
+        this.rank_box.text.boundsAlignH = 'left';
+
         this.createLeaderboard(data);
+
+        this.createMiniMap();
 
         this.socket.emit('get-leaderboard');
         this.leaderboard_interval = setInterval(() => {
@@ -443,7 +485,7 @@ class GameService {
     }
 
     newEnemy(data) {
-        let newEnemy = new RemotePlayer(data.id, data.username, data.x, data.y, data.size, data.angle, data.color, data.shield, this.engine, this.socket);
+        let newEnemy = new RemotePlayer(data.id, data.username, data.x, data.y, data.size, data.angle, data.color, data.shield, this, this.socket);
 
         this.enemies.push(newEnemy);
     }
@@ -521,6 +563,9 @@ class GameService {
         let speed = distance / 0.06;
 
         movePlayer.rotation = PositionService.moveToPointer(movePlayer.player, speed, newPointer);
+
+        movePlayer.map.x = (movePlayer.player.x / (10000 / 220)) - 20;
+        movePlayer.map.y = (movePlayer.player.y / (10000 / 220)) - 20;
     }
 
     onInputReceived(data) {
@@ -542,6 +587,11 @@ class GameService {
 
         //move to the new position.
         player.rotation = PositionService.moveToPointer(player, speed, newPointer);
+
+        if (this.map_group) {
+            player.map.x = (player.x / (10000 / 220)) - 20;
+            player.map.y = (player.y / (10000 / 220)) - 20;
+        }
     }
 
     onGained(data) {
@@ -711,6 +761,8 @@ class GameService {
 
         removePlayer.text.destroy();
         removePlayer.player.destroy();
+        removePlayer.map.destroy();
+
         this.enemies.splice(this.enemies.indexOf(removePlayer), 1);
     }
 
@@ -728,11 +780,14 @@ class GameService {
             this.leaderboard['line_' + (key + 1) + '_left'].setText((key + 1) + ': ' + leader.username);
             this.leaderboard['line_' + (key + 1) + '_right'].setText(leader.score);
         });
+
+        this.rank_box.text.setText('Score: ' + data.score);
     }
 
     onKilled(data) {
         if (player) {
             player.text.destroy();
+            player.map.destroy();
             player.destroy();
 
             let deadBlock = jQuery('#dead');

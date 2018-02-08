@@ -198,6 +198,8 @@ class GameService {
         for (let i = explodableMines.length - 1; i >= 0; i--) {
             this.mine_list.splice(explodableMines[i], 1);
         }
+
+
     }
 
     heartbeat() {
@@ -259,10 +261,16 @@ class GameService {
         this.io.emit("item-update", pushableItems);
     }
 
-    findPlayer(id) {
+    findPlayer(id, returnKey) {
+        if (typeof returnKey === 'undefined') returnKey = false;
+
         for (let i = 0; i < this.player_list.length; i++) {
             if (this.player_list[i].id === id) {
-                return this.player_list[i];
+                if (returnKey) {
+                    return i;
+                } else {
+                    return this.player_list[i];
+                }
             }
         }
 
@@ -443,7 +451,7 @@ class GameService {
 
                 this.removable_bodies.push(playerBody);
 
-                this.player_list.splice(this.player_list.indexOf(player), 1);
+                this.player_list.splice(this.player_list.indexOf(this.findPlayer(player.id, true)), 1);
             } else {
                 this.io.emit('explosion', {
                     id: object.id,
@@ -548,6 +556,7 @@ class Player {
         this.color = UtilService.getRandomColor();
         this.start_thrust = false;
         this.start_time = (new Date()).getTime();
+        this.last_move = null;
 
         this.createBody();
     }
@@ -663,9 +672,10 @@ io.sockets.on('connection', function (socket) {
         game.log('Client disconnected');
 
         let removePlayer = game.findPlayer(this.id);
+        let removePlayerKey = game.findPlayer(this.id, true);
 
         if (removePlayer) {
-            game.player_list.splice(game.player_list.indexOf(removePlayer), 1);
+            game.player_list.splice(removePlayerKey, 1);
         }
 
         game.log("Removing player " + this.id);
@@ -675,6 +685,9 @@ io.sockets.on('connection', function (socket) {
             id: this.id
         });
 
+        if (removePlayer.body) {
+            game.removable_bodies.push(removePlayer.body);
+        }
     });
 
     // listen for new player
@@ -811,8 +824,8 @@ io.sockets.on('connection', function (socket) {
 
         let radius = movePlayer.size + (movePlayer.shield / 2);
 
-        if (x <= (1000  + radius)) {
-            movePlayer.body.position[0] = 1000  + radius;
+        if (x <= (1000 + radius)) {
+            movePlayer.body.position[0] = 1000 + radius;
         }
 
         if (y <= (1000 + radius)) {
@@ -829,6 +842,8 @@ io.sockets.on('connection', function (socket) {
 
         movePlayer.x = movePlayer.body.position[0];
         movePlayer.y = movePlayer.body.position[1];
+
+        movePlayer.last_move = (new Date()).getTime();
 
         //new player position to be sent back to client.
         let info = {
@@ -943,6 +958,11 @@ io.sockets.on('connection', function (socket) {
     });
 
     socket.on('get-leaderboard', function () {
+        let player = game.findPlayer(this.id);
+        if (!player) {
+            return false;
+        }
+
         let sortedPlayers = _.orderBy(game.player_list, ['score'], ['desc']);
         let leaders = [];
 
@@ -956,7 +976,8 @@ io.sockets.on('connection', function (socket) {
         }
 
         this.emit('get-leaderboard', {
-            leaders: leaders
+            leaders: leaders,
+            score: player.score
         });
     });
 });
