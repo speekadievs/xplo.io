@@ -27,6 +27,10 @@ app.get('/favicon.ico', function (req, res) {
     res.sendFile(__dirname + '/public/favicon.ico');
 });
 
+app.get('/c9b0522c0e633bc0bae8419ee20cf8c5.html', function (req, res) {
+    res.sendFile(__dirname + '/public/c9b0522c0e633bc0bae8419ee20cf8c5.html');
+});
+
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/public/index.html');
 });
