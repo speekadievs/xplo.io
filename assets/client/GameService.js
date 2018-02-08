@@ -490,9 +490,15 @@ class GameService {
         this.enemies.push(newEnemy);
     }
 
-    findPlayer(id) {
+    findPlayer(id, returnKey) {
+        if (typeof returnKey === 'undefined') returnKey = false;
+
         for (let i = 0; i < this.enemies.length; i++) {
             if (this.enemies[i].id === id) {
+                if (returnKey) {
+                    return i;
+                }
+
                 return this.enemies[i];
             }
         }
@@ -500,9 +506,15 @@ class GameService {
         return false;
     }
 
-    findItem(id) {
+    findItem(id, returnKey) {
+        if (typeof returnKey === 'undefined') returnKey = false;
+
         for (let i = 0; i < this.food_list.length; i++) {
             if (this.food_list[i].id === id) {
+                if (returnKey) {
+                    return i;
+                }
+
                 return this.food_list[i];
             }
         }
@@ -510,9 +522,15 @@ class GameService {
         return false;
     }
 
-    findMine(id) {
+    findMine(id, returnKey) {
+        if (typeof returnKey === 'undefined') returnKey = false;
+
         for (let i = 0; i < this.mine_list.length; i++) {
             if (this.mine_list[i].id === id) {
+                if (returnKey) {
+                    return i;
+                }
+
                 return this.mine_list[i];
             }
         }
@@ -520,9 +538,15 @@ class GameService {
         return false;
     }
 
-    findGrenade(id) {
+    findGrenade(id, returnKey) {
+        if (typeof returnKey === 'undefined') returnKey = false;
+
         for (let i = 0; i < this.grenade_list.length; i++) {
             if (this.grenade_list[i].id === id) {
+                if (returnKey) {
+                    return i;
+                }
+
                 return this.grenade_list[i];
             }
         }
@@ -756,14 +780,14 @@ class GameService {
         // Player not found
         if (!removePlayer) {
             console.log('Player not found: ', data.id);
-            return;
+            return false;
         }
 
         removePlayer.text.destroy();
         removePlayer.player.destroy();
         removePlayer.map.destroy();
 
-        this.enemies.splice(this.enemies.indexOf(removePlayer), 1);
+        this.enemies.splice(this.findPlayer(data.id, true), 1);
     }
 
     onGetLeaderboard(data) {

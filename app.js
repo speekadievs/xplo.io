@@ -451,7 +451,7 @@ class GameService {
 
                 this.removable_bodies.push(playerBody);
 
-                this.player_list.splice(this.player_list.indexOf(this.findPlayer(player.id, true)), 1);
+                this.player_list.splice(this.findPlayer(player.id, true), 1);
             } else {
                 this.io.emit('explosion', {
                     id: object.id,

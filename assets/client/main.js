@@ -179,15 +179,13 @@ socket.on("connected", function () {
                 //the server.
                 let pointer = engine.input.activePointer;
 
-                if (!document.hidden) {
-                    //Send a new position data to the server
-                    socket.emit('move-pointer', {
-                        pointer_x: pointer.x,
-                        pointer_y: pointer.y,
-                        pointer_worldx: pointer.worldX,
-                        pointer_worldy: pointer.worldY,
-                    });
-                }
+                //Send a new position data to the server
+                socket.emit('move-pointer', {
+                    pointer_x: pointer.x,
+                    pointer_y: pointer.y,
+                    pointer_worldx: pointer.worldX,
+                    pointer_worldy: pointer.worldY,
+                });
 
                 if (player) {
                     player.updateTextPos();
