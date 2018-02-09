@@ -1,3 +1,31 @@
+// Will be needed, when more players come
+
+// let cluster = require('cluster');
+//
+// if (cluster.isMaster) {
+//     let numWorkers = require('os').cpus().length;
+//
+//     console.log('Master cluster setting up ' + numWorkers + ' workers...');
+//
+//     for (let i = 0; i < numWorkers; i++) {
+//         cluster.fork();
+//     }
+//
+//     cluster.on('online', function (worker) {
+//         console.log('Worker ' + worker.process.pid + ' is online');
+//     });
+//
+//     cluster.on('exit', function (worker, code, signal) {
+//         console.log('Worker ' + worker.process.pid + ' died with code: ' + code + ', and signal: ' + signal);
+//         console.log('Starting a new worker');
+//         cluster.fork();
+//     });
+//
+// } else {
+//
+//
+// }
+
 let _ = require('lodash');
 
 let express = require('express');
@@ -683,7 +711,7 @@ class Player {
 }
 
 
-//the physics world in the server. This is where all the physics happens. 
+//the physics world in the server. This is where all the physics happens.
 //we set gravity to 0 since we are just following mouse pointers.
 let world = new p2.World({
     gravity: [0, 0]
@@ -724,7 +752,7 @@ setInterval(() => {
                     socket.disconnect();
                 }
 
-                this.log('Disconnecting inactive player with the ID ' + player.id);
+                game.log('Disconnecting inactive player with the ID ' + player.id);
             }
         }
 
