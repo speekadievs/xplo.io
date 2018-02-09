@@ -203,42 +203,6 @@ class GameService {
         for (let i = explodableMines.length - 1; i >= 0; i--) {
             this.mine_list.splice(explodableMines[i], 1);
         }
-
-        let inactivePlayers = [];
-        this.player_list.forEach((player, key) => {
-            if (player.last_move) {
-                if (((currentTime - player.last_move) / 1000) >= this.properties.max_inactive) {
-                    let socket = this.io.sockets.connected[player.id];
-
-                    if (socket) {
-                        socket.disconnect();
-                    }
-
-                    this.log('Disconnecting inactive player with the ID ' + player.id);
-                }
-            }
-
-            if (player.last_ping) {
-                if (((currentTime - player.last_ping) / 1000) >= 30) {
-                    inactivePlayers.push(key);
-
-                    //send message to every connected client except the sender
-                    this.io.emit('remove-player', {
-                        id: player.id
-                    });
-
-                    if (player.body) {
-                        game.removable_bodies.push(player.body);
-                    }
-
-                    this.log('Removing inactive player with the ID ' + player.id);
-                }
-            }
-        });
-
-        for (let i = inactivePlayers.length - 1; i >= 0; i--) {
-            this.player_list.splice(inactivePlayers[i], 1);
-        }
     }
 
     heartbeat() {
@@ -741,6 +705,49 @@ setInterval(() => {
         global.gc();
     } else {
         console.log('Garbage collection unavailable.  Pass --expose-gc when launching node to enable forced garbage collection.');
+    }
+}, 30000);
+
+//Remove inactive players
+setInterval(() => {
+    game.log('Checking if there are any inactive players that should be removed');
+
+    let currentTime = (new Date()).getTime();
+
+    let inactivePlayers = [];
+    game.player_list.forEach((player, key) => {
+        if (player.last_move) {
+            if (((currentTime - player.last_move) / 1000) >= game.properties.max_inactive) {
+                let socket = game.io.sockets.connected[player.id];
+
+                if (socket) {
+                    socket.disconnect();
+                }
+
+                this.log('Disconnecting inactive player with the ID ' + player.id);
+            }
+        }
+
+        if (player.last_ping) {
+            if (((currentTime - player.last_ping) / 1000) >= 30) {
+                inactivePlayers.push(key);
+
+                //send message to every connected client except the sender
+                game.io.emit('remove-player', {
+                    id: player.id
+                });
+
+                if (player.body) {
+                    game.removable_bodies.push(player.body);
+                }
+
+                game.log('Removing inactive player with the ID ' + player.id);
+            }
+        }
+    });
+
+    for (let i = inactivePlayers.length - 1; i >= 0; i--) {
+        game.player_list.splice(inactivePlayers[i], 1);
     }
 }, 30000);
 
