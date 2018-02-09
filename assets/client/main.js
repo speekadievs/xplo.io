@@ -9,6 +9,7 @@ jQuery('#home').fadeIn();
 window.player = null;
 window.username = '';
 window.disconnected = false;
+window.playClicked = false;
 
 let GameService = require('./GameService.js');
 
@@ -280,6 +281,9 @@ socket.on("connected", function () {
     };
 
     jQuery(document).on('click', '#play-button', function () {
+        jQuery(this).hide();
+        jQuery('#loading-button').show();
+
         let gameElement = jQuery('#game');
 
         jQuery('#home').fadeOut();

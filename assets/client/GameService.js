@@ -832,6 +832,9 @@ class GameService {
 
                 this.engine.state.start('BlankStage', true);
 
+                jQuery('#play-button').show();
+                jQuery('#loading-button').hide();
+
                 jQuery('#game').fadeOut();
                 jQuery('#home').fadeIn();
                 jQuery('#login').hide();

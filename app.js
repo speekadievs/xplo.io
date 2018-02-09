@@ -775,6 +775,12 @@ io.sockets.on('connection', function (socket) {
 
     // listen for new player
     socket.on("new-player", function (data) {
+        let existingPlayer = game.findPlayer(this.id);
+        if (existingPlayer) {
+            game.log('Player with the ID ' + this.id + ' already exists');
+            return false;
+        }
+
         if (typeof data.username === 'undefined') {
             game.log('Corrupted data in new-player event - ' + JSON.stringify(data));
         }
