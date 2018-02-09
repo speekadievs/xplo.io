@@ -218,7 +218,7 @@ class GameService {
                 }
             }
 
-            if(player.last_ping){
+            if (player.last_ping) {
                 if (((currentTime - player.last_ping) / 1000) >= 30) {
                     inactivePlayers.push(key);
 
@@ -498,16 +498,26 @@ class GameService {
                     killer.score = killer.score + 50;
                 }
 
-                for (let i = 0; i < player.mines.length; i++) {
-                    let randomX = player.x + UtilService.getRandomInt(-30, 30);
-                    let randomY = player.y + UtilService.getRandomInt(-30, 30);
+                let mineCount = parseInt((player.mines.length / 2));
+                if (mineCount > 30) {
+                    mineCount = 30;
+                }
+
+                let grenadeCount = parseInt((player.grenades.length / 2));
+                if (grenadeCount > 50) {
+                    grenadeCount = 50;
+                }
+
+                for (let i = 0; i < mineCount; i++) {
+                    let randomX = player.x + UtilService.getRandomInt(-100, 100);
+                    let randomY = player.y + UtilService.getRandomInt(-100, 100);
 
                     this.addFood(1, 'mine-pickup', randomX, randomY)
                 }
 
-                for (let i = 0; i < player.grenades.length; i++) {
-                    let randomX = player.x + UtilService.getRandomInt(-30, 30);
-                    let randomY = player.y + UtilService.getRandomInt(-30, 30);
+                for (let i = 0; i < grenadeCount; i++) {
+                    let randomX = player.x + UtilService.getRandomInt(-100, 100);
+                    let randomY = player.y + UtilService.getRandomInt(-100, 100);
 
                     this.addFood(1, 'grenade-pickup', randomX, randomY)
                 }

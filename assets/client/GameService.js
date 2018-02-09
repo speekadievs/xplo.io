@@ -845,6 +845,8 @@ class GameService {
 
         this.enemies.forEach(enemy => {
             enemy.player.destroy();
+            enemy.text.destroy();
+            enemy.map.destroy();
         });
 
         this.enemies = [];
