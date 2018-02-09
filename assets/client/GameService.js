@@ -35,6 +35,7 @@ class GameService {
         this.can_launch = true;
 
         this.leaderboard_interval = null;
+        this.ping_interval = null;
 
         this.bounds = null;
         this.customBounds = null;
@@ -279,6 +280,10 @@ class GameService {
         this.leaderboard_interval = setInterval(() => {
             this.socket.emit('get-leaderboard');
         }, 2000);
+
+        this.ping_interval = setInterval(() => {
+            this.socket.emit('ping');
+        }, 10000);
     }
 
     createLeaderboard(data) {
@@ -870,6 +875,7 @@ class GameService {
         this.can_launch = true;
 
         clearInterval(this.leaderboard_interval);
+        clearInterval(this.ping_interval);
     }
 }
 

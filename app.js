@@ -104,7 +104,8 @@ class GameService {
             max_shield: 100,
             mine_damage: 20,
             grenade_damage: 5,
-            mine_lifetime: 120
+            mine_lifetime: 45,
+            max_inactive: 120,
         };
 
         this.world = world;
@@ -203,7 +204,41 @@ class GameService {
             this.mine_list.splice(explodableMines[i], 1);
         }
 
+        let inactivePlayers = [];
+        this.player_list.forEach((player, key) => {
+            if (player.last_move) {
+                if (((currentTime - player.last_move) / 1000) >= this.properties.max_inactive) {
+                    let socket = this.io.sockets.connected[player.id];
 
+                    if (socket) {
+                        socket.disconnect();
+                    }
+
+                    this.log('Disconnecting inactive player with the ID ' + player.id);
+                }
+            }
+
+            if(player.last_ping){
+                if (((currentTime - player.last_ping) / 1000) >= 30) {
+                    inactivePlayers.push(key);
+
+                    //send message to every connected client except the sender
+                    this.io.emit('remove-player', {
+                        id: player.id
+                    });
+
+                    if (player.body) {
+                        game.removable_bodies.push(player.body);
+                    }
+
+                    this.log('Removing inactive player with the ID ' + player.id);
+                }
+            }
+        });
+
+        for (let i = inactivePlayers.length - 1; i >= 0; i--) {
+            this.player_list.splice(inactivePlayers[i], 1);
+        }
     }
 
     heartbeat() {
@@ -235,11 +270,21 @@ class GameService {
         this.handlePhysics();
     }
 
-    addFood(n, type) {
+    addFood(n, type, x, y) {
 
         //return if it is not required to create food
         if (n <= 0) {
             return false;
+        }
+
+        let positionX = false;
+        if (typeof x !== 'undefined') {
+            positionX = x;
+        }
+
+        let positionY = false;
+        if (typeof x !== 'undefined') {
+            positionY = y;
         }
 
         let pushableItems = [];
@@ -255,7 +300,7 @@ class GameService {
                 color = this.properties.grenade_color;
             }
 
-            let foodEntity = new FoodObject(this.properties.width, this.properties.height, color, type, uniqueId);
+            let foodEntity = new FoodObject(this.properties.width, this.properties.height, color, type, uniqueId, positionX, positionY);
 
             this.food_list.push(foodEntity);
             pushableItems.push(foodEntity);
@@ -272,9 +317,9 @@ class GameService {
             if (this.player_list[i].id === id) {
                 if (returnKey) {
                     return i;
-                } else {
-                    return this.player_list[i];
                 }
+
+                return this.player_list[i];
             }
         }
 
@@ -288,9 +333,9 @@ class GameService {
             if (this.food_list[i].id === id) {
                 if (returnKey) {
                     return i;
-                } else {
-                    return this.food_list[i];
                 }
+
+                return this.food_list[i];
             }
         }
 
@@ -304,9 +349,9 @@ class GameService {
             if (this.mine_list[i].id === id) {
                 if (returnKey) {
                     return i;
-                } else {
-                    return this.mine_list[i];
                 }
+
+                return this.mine_list[i];
             }
         }
 
@@ -364,7 +409,7 @@ class GameService {
         }
 
         if (!object) {
-            this.log("Could not find object", 'error');
+            //this.log("Could not find object", 'error');
             return false;
         }
 
@@ -453,6 +498,20 @@ class GameService {
                     killer.score = killer.score + 50;
                 }
 
+                for (let i = 0; i < player.mines.length; i++) {
+                    let randomX = player.x + UtilService.getRandomInt(-30, 30);
+                    let randomY = player.y + UtilService.getRandomInt(-30, 30);
+
+                    this.addFood(1, 'mine-pickup', randomX, randomY)
+                }
+
+                for (let i = 0; i < player.grenades.length; i++) {
+                    let randomX = player.x + UtilService.getRandomInt(-30, 30);
+                    let randomY = player.y + UtilService.getRandomInt(-30, 30);
+
+                    this.addFood(1, 'grenade-pickup', randomX, randomY)
+                }
+
                 this.removable_bodies.push(playerBody);
 
                 this.player_list.splice(this.findPlayer(player.id, true), 1);
@@ -477,9 +536,17 @@ class GameService {
 }
 
 class FoodObject {
-    constructor(max_x, max_y, color, type, id) {
-        this.x = UtilService.getRandomInt(1010, max_x - 10);
-        this.y = UtilService.getRandomInt(1010, max_y - 10);
+    constructor(max_x, max_y, color, type, id, fixed_x, fixed_y) {
+        if (typeof fixed_x === 'undefined') {
+            fixed_x = false;
+        }
+
+        if (typeof fixed_y === 'undefined') {
+            fixed_y = false;
+        }
+
+        this.x = fixed_x ? fixed_x : UtilService.getRandomInt(1010, max_x - 10);
+        this.y = fixed_y ? fixed_y : UtilService.getRandomInt(1010, max_y - 10);
         this.type = type;
         this.id = id;
         this.color = color;
@@ -561,6 +628,7 @@ class Player {
         this.start_thrust = false;
         this.start_time = (new Date()).getTime();
         this.last_move = null;
+        this.last_ping = null;
 
         this.createBody();
     }
@@ -680,9 +748,10 @@ io.sockets.on('connection', function (socket) {
 
         if (removePlayer) {
             game.player_list.splice(removePlayerKey, 1);
+            game.log("Removing player " + this.id);
+        } else {
+            game.log('Couldn\'t remove player with the ID ' + this.id, 'error');
         }
-
-        game.log("Removing player " + this.id);
 
         //send message to every connected client except the sender
         this.broadcast.emit('remove-player', {
@@ -788,9 +857,9 @@ io.sockets.on('connection', function (socket) {
             game.log('Corrupted data in move-pointer event - ' + JSON.stringify(data));
         }
 
-        let movePlayer = game.findPlayer(this.id, this.room);
+        let movePlayer = game.findPlayer(this.id);
 
-        if (!movePlayer || movePlayer.dead) {
+        if (!movePlayer) {
             return false;
         }
 
@@ -983,6 +1052,15 @@ io.sockets.on('connection', function (socket) {
             leaders: leaders,
             score: player.score
         });
+    });
+
+    socket.on('ping', function () {
+        let player = game.findPlayer(this.id);
+        if (!player) {
+            return false;
+        }
+
+        player.last_ping = (new Date()).getTime();
     });
 });
 
