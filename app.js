@@ -33,6 +33,12 @@ let bodyParser = require('body-parser');
 let nodemailer = require('nodemailer');
 let mg = require('nodemailer-mailgun-transport');
 
+let redis = require("redis");
+let client = redis.createClient({
+    host: process.env.REDIS_HOST ? process.env.REDIS_HOST : 'xplo-live.gvyafa.0001.euw1.cache.amazonaws.com',
+    port: process.env.REDIS_PORT ? process.env.REDIS_PORT : 6379
+});
+
 //require p2 physics library in the server.
 let p2 = require('p2');
 
@@ -55,8 +61,12 @@ app.get('/favicon.ico', function (req, res) {
     res.sendFile(__dirname + '/public/favicon.ico');
 });
 
-app.get('/c9b0522c0e633bc0bae8419ee20cf8c5.html', function (req, res) {
-    res.sendFile(__dirname + '/public/c9b0522c0e633bc0bae8419ee20cf8c5.html');
+app.get('/xplo-banner', function (req, res) {
+    res.sendFile(__dirname + '/public/xplo-banner.html');
+});
+
+app.get('/xplo-player', function (req, res) {
+    res.sendFile(__dirname + '/public/xplo-player.html');
 });
 
 app.get('/', function (req, res) {
@@ -65,6 +75,12 @@ app.get('/', function (req, res) {
 
 app.get('/privacy', function (req, res) {
     res.sendFile(__dirname + '/public/privacy.html');
+});
+
+app.get('/load/highscore', function (req, res) {
+    client.get("highscores", (err, reply) => {
+        res.send(reply ? JSON.parse(reply) : []);
+    });
 });
 
 app.post('/send/feedback', function (request, response) {
@@ -135,6 +151,19 @@ class GameService {
             mine_lifetime: 45,
             max_inactive: 120,
         };
+
+        this.leader = {
+            id: false,
+            score: 0
+        };
+
+        this.highscores = [];
+
+        client.get("highscores", (err, reply) => {
+            if (reply) {
+                this.highscores = JSON.parse(reply);
+            }
+        });
 
         this.world = world;
         this.io = io;
@@ -366,6 +395,50 @@ class GameService {
         return false;
     }
 
+    getLeader() {
+        return _.head(_.orderBy(this.player_list, ['score'], ['desc']));
+    }
+
+    checkLeader(player) {
+        if (player.id !== this.leader.id) {
+            if (player.score > this.leader.score) {
+                this.leader.score = player.score;
+                this.leader.id = player.id;
+
+                this.io.emit('change-leader', {
+                    id: player.id
+                });
+            }
+        } else {
+            this.leader.score = player.score;
+        }
+    }
+
+    recalculateHighscore(player) {
+        if (player.username) {
+            let highScores = _.cloneDeep(this.highscores);
+
+            let found = _.findIndex(highScores, (highscore) => {
+                return highscore.username === player.username;
+            });
+
+            if (player) {
+                if (found && highScores[found]) {
+                    if (player.score > highScores[found].score) {
+                        highScores[found].score = player.score;
+                    }
+                } else {
+                    highScores.push({
+                        username: player.username,
+                        score: player.score
+                    });
+                }
+
+                this.highscores = _.take(_.orderBy(highScores, ['score'], ['desc']), 5);
+            }
+        }
+    }
+
     onContact(firstBody, secondBody) {
         let object = null;
         let player = null;
@@ -456,6 +529,8 @@ class GameService {
             this.io.emit('item-remove', object);
 
             this.removable_bodies.push(objectBody);
+
+            this.checkLeader(player);
         } else {
             let killer = game.findPlayer(object.user_id);
 
@@ -514,9 +589,24 @@ class GameService {
                     this.addFood(1, 'grenade-pickup', randomX, randomY)
                 }
 
+                this.recalculateHighscore(player);
+
                 this.removable_bodies.push(playerBody);
 
                 this.player_list.splice(this.findPlayer(player.id, true), 1);
+
+                if (killer) {
+                    if (player.id === this.leader.id) {
+                        killer.score = killer.score + (player.score / 2);
+                    }
+
+                    this.checkLeader(killer);
+                } else {
+                    if (player.id === this.leader.id) {
+                        this.leader.id = false;
+                        this.leader.score = 0;
+                    }
+                }
             } else {
                 this.io.emit('explosion', {
                     id: object.id,
@@ -571,7 +661,7 @@ class FoodObject {
         });
 
         this.shape = new p2.Circle({
-            radius: (this.size + this.line_size / 2)
+            radius: ((this.size + this.line_size) / 2)
         });
 
         this.body.addShape(this.shape);
@@ -769,6 +859,13 @@ setInterval(() => {
                     game.removable_bodies.push(player.body);
                 }
 
+                if (player.id === game.leader.id) {
+                    game.leader.id = false;
+                    game.leader.score = 0;
+                }
+
+                this.recalculateHighscore(player);
+
                 game.log('Removing inactive player with the ID ' + player.id);
             }
         }
@@ -777,6 +874,8 @@ setInterval(() => {
     for (let i = inactivePlayers.length - 1; i >= 0; i--) {
         game.player_list.splice(inactivePlayers[i], 1);
     }
+
+    client.set('highscores', JSON.stringify(game.highscores));
 }, 30000);
 
 io.sockets.on('connection', function (socket) {
@@ -790,6 +889,8 @@ io.sockets.on('connection', function (socket) {
 
         let removePlayer = game.findPlayer(this.id);
         let removePlayerKey = game.findPlayer(this.id, true);
+
+        game.recalculateHighscore(removePlayer);
 
         if (removePlayer) {
             game.player_list.splice(removePlayerKey, 1);
@@ -805,6 +906,11 @@ io.sockets.on('connection', function (socket) {
 
         if (removePlayer.body) {
             game.removable_bodies.push(removePlayer.body);
+        }
+
+        if (game.leader.id === this.id) {
+            game.leader.id = false;
+            game.leader.score = 0;
         }
     });
 
@@ -878,6 +984,10 @@ io.sockets.on('connection', function (socket) {
 
             //send message to the sender-client only
             this.emit("new-enemy", existingPlayerInfo);
+
+            this.emit('change-leader', {
+                id: game.leader.id
+            });
         }
 
         this.emit('item-update', game.food_list);

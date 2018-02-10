@@ -27,11 +27,6 @@ class GrenadeObject {
         this.item.type = 'grenade';
         this.item.id = id;
         this.item.user_id = user_id;
-        this.item.self_kill = false;
-
-        setTimeout(() => {
-            this.item.self_kill = true;
-        }, 5000);
 
         engine.physics.p2.enableBody(this.item);
         this.item.body.clearShapes();

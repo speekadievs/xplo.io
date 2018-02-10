@@ -64,6 +64,38 @@ class RemotePlayer {
     updateTextPos() {
         this.text.position.copyFrom(this.player.position);
     }
+
+    resetMap(game) {
+        if (!this.map) {
+            return false;
+        }
+
+        this.map.destroy();
+
+        if (game.map_group) {
+            this.map = game.engine.add.graphics(0, 0, game.map_group);
+            this.map.beginFill(0xFF0000);
+            this.map.drawCircle(0, 0, 5);
+            this.map.endFill();
+            this.map.anchor.setTo(0.5, 0.5);
+        }
+    }
+
+    createLeader(game) {
+        if (!this.map) {
+            return false;
+        }
+
+        this.map.destroy();
+
+        if (game.map_group) {
+            this.map = game.engine.add.graphics(0, 0, game.map_group);
+            this.map.beginFill(0xFFFF00);
+            this.map.drawCircle(0, 0, 10);
+            this.map.endFill();
+            this.map.anchor.setTo(0.5, 0.5);
+        }
+    }
 }
 
 module.exports = RemotePlayer;

@@ -51,6 +51,13 @@
 
         gtag('config', 'UA-113447093-1');
     </script>
+
+    <script async src="//api.adinplay.com/display/pub/XPL/xplo.io/display.min.js"></script>
+    <script>
+        var aiptag = aiptag || {};
+        aiptag.cmd = aiptag.cmd || [];
+        aiptag.cmd.display = aiptag.cmd.display || [];
+    </script>
 </head>
 <body>
 
@@ -86,7 +93,7 @@
         </div>
     </div>
     <div class="version-container">
-        v0.1.7
+        v0.1.8
     </div>
     <div class="cross-promote">
         <iframe id="IOG_CP" scrolling="no" frameborder="0" width="200"
@@ -101,105 +108,248 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
 
         </iframe>
     </div>
+    <div class="high-score block">
+        <div style="padding:10px">
+            <div class="text-center" style="font-size: 16px;">
+                Best Players
+            </div>
+            <ul id="high-score" class="list-unstyled">
+
+            </ul>
+        </div>
+    </div>
     <div class="row h-100">
-        <div class="col-md-8 offset-md-2 block align-self-center">
-            <div id="connecting" class="text-center" style="margin:50px">
-                <i class="fa fa-refresh fa-spin fa-3x"></i>
-                <h2>Connecting...</h2>
-            </div>
-            <div id="disconnected" class="text-center" style="display:none; margin:50px">
-                <h3>Oh no, you've disconnected from the server</h3>
-                <button id="reconnect" type="button" class="btn btn-primary">
-                    Reconnect
-                </button>
-            </div>
-            <div id="login" style="display:none">
-                <div class="logo text-center">
-                    <img src="/images/logo.png" class="img-fluid">
+        <div class="col-md-8 offset-md-2 align-self-center">
+            <div class="block">
+                <div id="connecting" class="text-center" style="padding:50px">
+                    <i class="fa fa-refresh fa-spin fa-3x"></i>
+                    <h2>Connecting...</h2>
                 </div>
-                <div class="col-md-6 offset-md-3">
-                    <div class="form-group text-center">
-                        <ul class="list-unstyled">
-                            <li class="tip-item" style="display:none">Eat <span
-                                    style="color:#49bcff"><strong>BLUE</strong></span> orbs
-                                to increase your shield
-                            </li>
-                            <li class="tip-item" style="display:none">Eat an <span
-                                    style="color:#d17732"><strong>ORANGE</strong></span>
-                                orb to get a grenade
-                            </li>
-                            <li class="tip-item" style="display:none">Eat a <span
-                                    style="color:#2d4053"><strong>BLACK</strong></span> orb
-                                to get a mine
-                            </li>
-                            <li class="tip-item" style="display:none">If someone is following you, drop a mine</li>
-                            <li class="tip-item" style="display:none">Don't step on your own mines</li>
-                            <li class="tip-item" style="display:none">Stay alive as long as possible</li>
-                            <li class="tip-item" style="display:none">Mines are more powerful than grenades</li>
-                        </ul>
+                <div id="disconnected" class="text-center" style="display:none; padding:50px">
+                    <h3>Oh no, you've disconnected from the server</h3>
+                    <button id="reconnect" type="button" class="btn btn-primary">
+                        Reconnect
+                    </button>
+                </div>
+                <div id="login" style="display:none;padding-bottom:10px;">
+                    <div class="logo text-center">
+                        <img src="/images/logo_small.png" class="img-fluid">
+                    </div>
+                    <div class="col-md-6 offset-md-3">
+                        <div class="form-group text-center">
+                            <ul class="list-unstyled">
+                                <li class="tip-item" style="display:none">Eat <span
+                                        style="color:#49bcff"><strong>BLUE</strong></span> orbs
+                                    to increase your shield
+                                </li>
+                                <li class="tip-item" style="display:none">Eat an <span
+                                        style="color:#d17732"><strong>ORANGE</strong></span>
+                                    orb to get a grenade
+                                </li>
+                                <li class="tip-item" style="display:none">Eat a <span
+                                        style="color:#2d4053"><strong>BLACK</strong></span> orb
+                                    to get a mine
+                                </li>
+                                <li class="tip-item" style="display:none">If someone is following you, drop a mine</li>
+                                <li class="tip-item" style="display:none">Don't step on your own mines</li>
+                                <li class="tip-item" style="display:none">Stay alive as long as possible</li>
+                                <li class="tip-item" style="display:none">Mines are more powerful than grenades</li>
+                                <li class="tip-item" style="display:none">Kill a Leader and receive half of the leaders score</li>
+                            </ul>
+                        </div>
+                        <div class="form-group">
+                            <input id="username" type="text" class="form-control form-control-lgs"
+                                   placeholder="Username...">
+                        </div>
+                        <div class="form-group text-center">
+                            <button id="play-button" type="button" class="btn btn-success btn-sm" style="width:150px">
+                                Play Game
+                            </button>
+                            <button id="loading-button" type="button" class="btn btn-success btn-sm"
+                                    style="display:none;width:150px">
+                                <i class="fa fa-refresh fa-spin"></i>
+                            </button>
+                        </div>
+                        <div class="form-group text-center">
+                            <ul class="list-unstyled">
+                                <li>Use <strong>SPACE</strong> to throw a grenade</li>
+                                <li>Use <strong>W</strong> to drop a mine</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div id="dead" class="text-center" style="display:none;padding:40px">
+                    <div class="form-group">
+                        <h2 style="margin-bottom: 40px">Oh no, you exploded!</h2>
+                        <h4>Score: <span class="score"></span></h4>
+                        <h4>Time: <span class="time"></span></h4>
                     </div>
                     <div class="form-group">
-                        <input id="username" type="text" class="form-control form-control-lg" placeholder="Username...">
+                        <div class="addthis_inline_share_toolbox"></div>
                     </div>
-                    <div class="form-group text-center">
-                        <button id="play-button" type="button" class="btn btn-success" style="width:150px">
-                            Play Game
-                        </button>
-                        <button id="loading-button" type="button" class="btn btn-success" style="display:none;width:150px">
-                            <i class="fa fa-refresh fa-spin"></i>
+                    <div class="form-group">
+                        <button id="play-again-button" type="button" class="btn btn-primary" style="width:150px">
+                            Play Again
                         </button>
                     </div>
-                    <div class="form-group text-center">
-                        <ul class="list-unstyled">
-                            <li>Use <strong>SPACE</strong> to throw a grenade</li>
-                            <li>Use <strong>W</strong> to drop a mine</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div id="dead" class="text-center" style="display:none">
-                <div class="form-group" style="padding: 80px 0">
-                    <h2 style="margin-bottom: 40px">Oh no, you exploded!</h2>
-                    <h4>Score: <span class="score"></span></h4>
-                    <h4>Time: <span class="time"></span></h4>
-                </div>
-                <div class="form-group">
-                    <div class="addthis_inline_share_toolbox"></div>
-                </div>
-                <div class="form-group">
-                    <button id="play-again-button" type="button" class="btn btn-primary" style="width:150px">
-                        Play Again
-                    </button>
                 </div>
             </div>
         </div>
-        <!--<div id="sleeping-mine" class="col-md-4 offset-md-4 block" style="display:none">-->
-        <!--<div class="form-group text-center">-->
-        <!--<small>Advertisement</small>-->
-        <!--</div>-->
-        <!--<div class="content">-->
-
-        <!--</div>-->
-        <!--</div>-->
-        <div class="col-md-8 offset-md-2 block align-self-end" style="margin-bottom:10px;">
+        <div class="col-md-8 offset-md-2">
             <div class="row">
-                <div class="col block">
-                    <ul class="list-inline text-center" style="margin-top:15px">
-                        <li class="list-inline-item align-middle">
-                            <a href="/privacy" data-toggle="modal" data-target="#privacy" class="privacy-policy">
-                                Privacy Policy
-                            </a>
-                        </li>
-                        <li class="list-inline-item align-middle">
-                            <a href="#" data-toggle="modal" data-target="#contacts">Contacts</a>
-                        </li>
-                        <li class="list-inline-item align-middle">
-                            <a href="http://iogames.space" target="_blank">More IO Games</a>
-                        </li>
-                        <li class="list-inline-item align-middle">
-                            <a href="#" data-toggle="modal" data-target="#changelog">Changelog</a>
-                        </li>
-                    </ul>
+                <div id="sleeping-mine" class="col-sm-6">
+                    <div class="block">
+                        <div class="form-group text-center">
+                            <small>Advertisement</small>
+                        </div>
+                        <div class="content" style="height:250px;margin: 0 auto">
+                            <div id='xplo-io_300x250' style="max-width:300px;margin: 0 auto">
+                                <script type='text/javascript'>
+                                    aiptag.cmd.display.push(function () {
+                                        aipDisplayTag.display('xplo-io_300x250');
+                                    });
+                                </script>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="changelog" class="col-sm-6">
+                    <div class="block" style="height:290px;overflow-y: auto;">
+                        <div style="padding:10px">
+                            <h5>v0.1.8</h5>
+                            <ul>
+                                <li>Added permanent highscores</li>
+                                <li>Added leader indication on the map</li>
+                                <li>When leader is killed, the killer will receive half of the leaders score</li>
+                            </ul>
+                            <hr>
+                            <h5>v0.1.7</h5>
+                            <ul>
+                                <li>Fixed double player spawning issue</li>
+                                <li>Reduced the mine alive time</li>
+                            </ul>
+                            <hr>
+                            <h5>v0.1.6</h5>
+                            <ul>
+                                <li>Added loot dropping, when a player dies</li>
+                                <li>Added inactive player auto disconnection</li>
+                            </ul>
+                            <hr>
+                            <h5>v0.1.5</h5>
+                            <ul>
+                                <li>Added mini map</li>
+                                <li>Added current score box</li>
+                                <li>Small bugfixes</li>
+                            </ul>
+                            <hr>
+                            <h5>v0.1.4</h5>
+                            <ul>
+                                <li>Decreased mine pickups</li>
+                                <li>Fixed an issue with items sometimes spawning outside of map bounds</li>
+                            </ul>
+                            <hr>
+                            <h5>v0.1.3</h5>
+                            <ul>
+                                <li>Added Discord button</li>
+                                <li>Fixed player and map bound collision issue</li>
+                            </ul>
+                            <hr>
+                            <h5>v0.1.2</h5>
+                            <ul>
+                                <li>Added arena bounds</li>
+                                <li>Added disconnection handler</li>
+                            </ul>
+                            <hr>
+                            <h5>v0.1.1</h5>
+                            <ul>
+                                <li>Fixed some minor connection issues</li>
+                                <li>Some minor homepage changes</li>
+                            </ul>
+                            <hr>
+                            <h5>v0.1.0</h5>
+                            <ul>
+                                <li>First release</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 offset-md-2 align-self-end" style="margin-bottom:10px;">
+            <div class="block">
+                <div class="row">
+                    <div class="col block">
+                        <ul class="list-inline text-center" style="margin-top:15px">
+                            <li class="list-inline-item align-middle">
+                                <a href="#" data-toggle="modal" data-target="#about">
+                                    About
+                                </a>
+                            </li>
+                            <li class="list-inline-item align-middle">
+                                <a href="/privacy" data-toggle="modal" data-target="#privacy" class="privacy-policy">
+                                    Privacy Policy
+                                </a>
+                            </li>
+                            <li class="list-inline-item align-middle">
+                                <a href="#" data-toggle="modal" data-target="#contacts">
+                                    Contacts
+                                </a>
+                            </li>
+                            <li class="list-inline-item align-middle">
+                                <a href="http://iogames.space" target="_blank">
+                                    More IO Games
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="about" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">About</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h2>
+                        About
+                    </h2>
+                    <p>
+                        This is the most explosive game. Blow up other players and survive as long as possible
+                    </p>
+
+                    <h2>
+                        How to Play
+                    </h2>
+                    <p>
+                        Use W to drop a mine
+                    </p>
+
+                    <p>
+                        Use SPACE to throw a grenade
+                    </p>
+
+                    <p>
+                        Don't step on other player and YOUR own mines.
+                    </p>
+
+                    <h2>
+                        Strategy
+                    </h2>
+                    <p>
+                        The main goal of the game, is to blow up as many enemies as you possibly can. Use grenades when
+                        you are chasing someone and use mines when someone is chasing you. Remember to not step on other
+                        player and YOUR own mines.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -287,93 +437,10 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
             </div>
         </div>
     </div>
-
-    <div id="changelog" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Changelog</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <h5>v0.1.7</h5>
-                    <ul>
-                        <li>Fixed double player spawning issue</li>
-                        <li>Reduced the mine alive time</li>
-                    </ul>
-                    <hr>
-                    <h5>v0.1.6</h5>
-                    <ul>
-                        <li>Added loot dropping, when a player dies</li>
-                        <li>Added inactive player auto disconnection</li>
-                    </ul>
-                    <hr>
-                    <h5>v0.1.5</h5>
-                    <ul>
-                        <li>Added mini map</li>
-                        <li>Added current score box</li>
-                        <li>Small bugfixes</li>
-                    </ul>
-                    <hr>
-                    <h5>v0.1.4</h5>
-                    <ul>
-                        <li>Decreased mine pickups</li>
-                        <li>Fixed an issue with items sometimes spawning outside of map bounds</li>
-                    </ul>
-                    <hr>
-                    <h5>v0.1.3</h5>
-                    <ul>
-                        <li>Added Discord button</li>
-                        <li>Fixed player and map bound collision issue</li>
-                    </ul>
-                    <hr>
-                    <h5>v0.1.2</h5>
-                    <ul>
-                        <li>Added arena bounds</li>
-                        <li>Added disconnection handler</li>
-                    </ul>
-                    <hr>
-                    <h5>v0.1.1</h5>
-                    <ul>
-                        <li>Fixed some minor connection issues</li>
-                        <li>Some minor homepage changes</li>
-                    </ul>
-                    <hr>
-                    <h5>v0.1.0</h5>
-                    <ul>
-                        <li>First release</li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="adblock-warning" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Notice</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 <div id="game" style="display:none"></div>
 
+<div id="preroll"></div>
 </body>
 <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5a75ebe81fd12ef6"></script>
 <script src="js/lib/phaser.min.js"></script>
@@ -398,15 +465,8 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
     };
 
     jQuery(document).ready(function () {
-        var warningShowed = localStorage.getItem('warning-showed');
-
         if (adblock) {
             jQuery('#sleeping-mine .content').html('<img src="/images/sleeping-mine.png" class="img-fluid mx-auto d-block">');
-
-            if (!warningShowed) {
-                //jQuery('#adblock-warning').modal('show');
-                localStorage.setItem('warning-showed', true);
-            }
         }
 
         jQuery('.privacy-policy').attr('href', '#');
@@ -418,6 +478,25 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
 
             tipItem.random().fadeIn();
         }, 7000);
+
+        jQuery.get('/load/highscore', function (response) {
+            var highScore = jQuery('#high-score');
+
+            highScore.empty();
+
+            response.forEach(function(player, key){
+                highScore.append('<li>'+(key +1)+': '+player.username+' <div class="float-right">'+player.score+'</div></li>');
+            });
+
+            highScore.append('<div style="clear: both"></div>');
+        })
+    });
+
+    jQuery(window).resize(function () {
+        var sleepingMine = jQuery('#sleeping-mine');
+        var changelog = jQuery('#changelog');
+
+        changelog.height(sleepingMine.height());
     });
 </script>
 </html>

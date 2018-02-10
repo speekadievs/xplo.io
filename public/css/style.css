@@ -16,6 +16,7 @@ body {
 .block {
     border-radius: 5px;
     background: #ffffff;
+    background-clip: content-box;
 }
 
 .connecting-block {
@@ -54,5 +55,13 @@ body {
     position: absolute;
     top: 50px;
     right:10px;
+    z-index: 1;
+}
+
+.high-score {
+    position: absolute;
+    top: 210px;
+    right:10px;
+    width:200px;
     z-index: 1;
 }

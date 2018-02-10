@@ -10,6 +10,7 @@ window.player = null;
 window.username = '';
 window.disconnected = false;
 window.playClicked = false;
+window.playCount = 0;
 
 let GameService = require('./GameService.js');
 
@@ -159,6 +160,10 @@ socket.on("connected", function () {
                     game.onGetLeaderboard(data);
                 });
 
+                socket.on('change-leader', function (data) {
+                    game.onChangeLeader(data);
+                });
+
                 socket.on('disconnect', function () {
                     window.disconnected = true;
 
@@ -288,6 +293,12 @@ socket.on("connected", function () {
 
         jQuery('#home').fadeOut();
         gameElement.fadeIn();
+
+        if (playCount) {
+            game.restart();
+        }
+
+        playCount++;
 
         if (!game.started) {
             engine.state.add('BlankStage', BlankStage);

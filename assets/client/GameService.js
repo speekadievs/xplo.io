@@ -813,6 +813,50 @@ class GameService {
         this.rank_box.text.setText('Score: ' + data.score);
     }
 
+    onChangeLeader(data) {
+        if (data.id === player.id) {
+            if (!player.map) {
+                return false;
+            }
+
+            player.map.destroy();
+
+            if (this.map_group) {
+                player.map = this.engine.add.graphics(0, 0, this.map_group);
+                player.map.beginFill(0xFFFF00);
+                player.map.drawCircle(0, 0, 10);
+                player.map.endFill();
+                player.map.anchor.setTo(0.5, 0.5);
+            }
+
+            this.enemies.forEach(enemy => {
+                enemy.resetMap(this);
+            })
+        } else {
+            if (!player.map) {
+                return false;
+            }
+
+            player.map.destroy();
+
+            if (this.map_group) {
+                player.map = this.engine.add.graphics(0, 0, this.map_group);
+                player.map.beginFill(0x00FF00);
+                player.map.drawCircle(0, 0, 5);
+                player.map.endFill();
+                player.map.anchor.setTo(0.5, 0.5);
+            }
+
+            this.enemies.forEach(enemy => {
+                if (enemy.id === data.id) {
+                    enemy.createLeader(this);
+                } else {
+                    enemy.resetMap(this);
+                }
+            });
+        }
+    }
+
     onKilled(data) {
         if (player) {
             player.text.destroy();
