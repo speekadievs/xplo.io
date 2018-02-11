@@ -285,8 +285,8 @@ socket.on("connected", function () {
         }
     };
 
-    jQuery(document).on('click', '#play-button', function () {
-        jQuery(this).hide();
+    window.startGame = function () {
+        jQuery('#play-button').hide();
         jQuery('#loading-button').show();
 
         let gameElement = jQuery('#game');
@@ -310,6 +310,26 @@ socket.on("connected", function () {
 
         gameElement.find('canvas').attr('width', (window.innerWidth * window.devicePixelRatio))
             .attr('height', (window.innerHeight * window.devicePixelRatio));
+    };
+
+    jQuery(document).on('click', '#play-button', function () {
+        if (window.playCount > 0) {
+            if (window.playCount === 1) {
+                aiptag.cmd.player.push(function () {
+                    adplayer.startPreRoll();
+                });
+            } else {
+                if (window.playCount % 4 === 0) {
+                    aiptag.cmd.player.push(function () {
+                        adplayer.startPreRoll();
+                    });
+                } else {
+                    window.startGame();
+                }
+            }
+        } else {
+            window.startGame();
+        }
     });
 
     jQuery(document).on('click', '#play-again-button', function () {

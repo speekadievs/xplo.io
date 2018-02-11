@@ -53,10 +53,30 @@
     </script>
 
     <script async src="//api.adinplay.com/display/pub/XPL/xplo.io/display.min.js"></script>
+    <script async src="//api.adinplay.com/player/v2/XPL/xplo.io/player.min.js"></script>
     <script>
         var aiptag = aiptag || {};
         aiptag.cmd = aiptag.cmd || [];
         aiptag.cmd.display = aiptag.cmd.display || [];
+        aiptag.cmd.player = aiptag.cmd.player || [];
+
+        aiptag.cmd.player.push(function () {
+            window.adplayer = new aipPlayer({
+                AD_WIDTH: 960,
+                AD_HEIGHT: 540,
+                AD_FULLSCREEN: true,
+                AD_CENTERPLAYER: false,
+                LOADING_TEXT: 'Loading...',
+                PREROLL_ELEM: function () {
+                    return document.getElementById('preroll')
+                },
+                AIP_COMPLETE: function () {
+                    window.startGame();
+                },
+                AIP_REMOVE: function () {
+                }
+            });
+        });
     </script>
 </head>
 <body>
@@ -93,7 +113,7 @@
         </div>
     </div>
     <div class="version-container">
-        v0.1.8
+        v0.1.9
     </div>
     <div class="cross-promote">
         <iframe id="IOG_CP" scrolling="no" frameborder="0" width="200"
