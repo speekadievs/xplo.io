@@ -591,8 +591,8 @@ class GameService {
                         randomX = game.properties.height - UtilService.getRandomInt(1, 15);
                     }
 
-                    if (y >= game.properties.width) {
-                        randomX = game.properties.width - UtilService.getRandomInt(1, 15);
+                    if (randomY >= game.properties.width) {
+                        randomY = game.properties.width - UtilService.getRandomInt(1, 15);
                     }
 
                     this.addFood(1, 'mine-pickup', randomX, randomY)
@@ -614,8 +614,8 @@ class GameService {
                         randomX = game.properties.height - UtilService.getRandomInt(1, 15);
                     }
 
-                    if (y >= game.properties.width) {
-                        randomX = game.properties.width - UtilService.getRandomInt(1, 15);
+                    if (randomY >= game.properties.width) {
+                        randomY = game.properties.width - UtilService.getRandomInt(1, 15);
                     }
 
                     this.addFood(1, 'grenade-pickup', randomX, randomY)

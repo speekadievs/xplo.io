@@ -497,7 +497,7 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
             highScore.empty();
 
             response.forEach(function (player, key) {
-                highScore.append('<li>' + (key + 1) + ': ' + player.username + ' <div class="float-right">' + player.score + '</div></li>');
+                highScore.append('<li>' + (key + 1) + ': ' + player.username + ' <div class="float-right">' + parseInt(player.score) + '</div></li>');
             });
 
             highScore.append('<div style="clear: both"></div>');
