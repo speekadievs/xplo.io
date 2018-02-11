@@ -579,12 +579,44 @@ class GameService {
                     let randomX = player.x + UtilService.getRandomInt(-100, 100);
                     let randomY = player.y + UtilService.getRandomInt(-100, 100);
 
+                    if (randomX <= 1000) {
+                        randomY = 1000 + UtilService.getRandomInt(1, 15);
+                    }
+
+                    if (randomY <= 1000) {
+                        randomY = 1000 + UtilService.getRandomInt(1, 15);
+                    }
+
+                    if (randomX >= game.properties.height) {
+                        randomX = game.properties.height - UtilService.getRandomInt(1, 15);
+                    }
+
+                    if (y >= game.properties.width) {
+                        randomX = game.properties.width - UtilService.getRandomInt(1, 15);
+                    }
+
                     this.addFood(1, 'mine-pickup', randomX, randomY)
                 }
 
                 for (let i = 0; i < grenadeCount; i++) {
                     let randomX = player.x + UtilService.getRandomInt(-100, 100);
                     let randomY = player.y + UtilService.getRandomInt(-100, 100);
+
+                    if (randomX <= 1000) {
+                        randomY = 1000 + UtilService.getRandomInt(1, 15);
+                    }
+
+                    if (randomY <= 1000) {
+                        randomY = 1000 + UtilService.getRandomInt(1, 15);
+                    }
+
+                    if (randomX >= game.properties.height) {
+                        randomX = game.properties.height - UtilService.getRandomInt(1, 15);
+                    }
+
+                    if (y >= game.properties.width) {
+                        randomX = game.properties.width - UtilService.getRandomInt(1, 15);
+                    }
 
                     this.addFood(1, 'grenade-pickup', randomX, randomY)
                 }
@@ -597,7 +629,7 @@ class GameService {
 
                 if (killer) {
                     if (player.id === this.leader.id) {
-                        killer.score = killer.score + (player.score / 2);
+                        killer.score = killer.score + parseInt((player.score / 2));
                     }
 
                     this.checkLeader(killer);
@@ -985,9 +1017,19 @@ io.sockets.on('connection', function (socket) {
             //send message to the sender-client only
             this.emit("new-enemy", existingPlayerInfo);
 
-            this.emit('change-leader', {
-                id: game.leader.id
-            });
+            if (!game.leader.id) {
+                let leader = game.getLeader();
+
+                if (leader) {
+                    this.emit('change-leader', {
+                        id: leader.id
+                    });
+                }
+            } else {
+                this.emit('change-leader', {
+                    id: game.leader.id
+                });
+            }
         }
 
         this.emit('item-update', game.food_list);

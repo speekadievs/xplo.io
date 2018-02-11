@@ -113,7 +113,7 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
             <div class="text-center" style="font-size: 16px;">
                 Best Players
             </div>
-            <ul id="high-score" class="list-unstyled">
+            <ul id="high-score" class="list-unstyled" style="font-size:13px">
 
             </ul>
         </div>
@@ -154,7 +154,9 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
                                 <li class="tip-item" style="display:none">Don't step on your own mines</li>
                                 <li class="tip-item" style="display:none">Stay alive as long as possible</li>
                                 <li class="tip-item" style="display:none">Mines are more powerful than grenades</li>
-                                <li class="tip-item" style="display:none">Kill a Leader and receive half of the leaders score</li>
+                                <li class="tip-item" style="display:none">Kill a Leader and receive half of the leaders
+                                    score
+                                </li>
                             </ul>
                         </div>
                         <div class="form-group">
@@ -216,6 +218,13 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
                 <div id="changelog" class="col-sm-6">
                     <div class="block" style="height:290px;overflow-y: auto;">
                         <div style="padding:10px">
+                            <h5>v0.1.9</h5>
+                            <ul>
+                                <li>Fixed decimal score issue</li>
+                                <li>Fixed an issue with items dropping outside of map bounds</li>
+                                <li>Small visual changes</li>
+                            </ul>
+                            <hr>
                             <h5>v0.1.8</h5>
                             <ul>
                                 <li>Added permanent highscores</li>
@@ -278,29 +287,32 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
         <div class="col-md-8 offset-md-2 align-self-end" style="margin-bottom:10px;">
             <div class="block">
                 <div class="row">
-                    <div class="col block">
-                        <ul class="list-inline text-center" style="margin-top:15px">
-                            <li class="list-inline-item align-middle">
-                                <a href="#" data-toggle="modal" data-target="#about">
-                                    About
-                                </a>
-                            </li>
-                            <li class="list-inline-item align-middle">
-                                <a href="/privacy" data-toggle="modal" data-target="#privacy" class="privacy-policy">
-                                    Privacy Policy
-                                </a>
-                            </li>
-                            <li class="list-inline-item align-middle">
-                                <a href="#" data-toggle="modal" data-target="#contacts">
-                                    Contacts
-                                </a>
-                            </li>
-                            <li class="list-inline-item align-middle">
-                                <a href="http://iogames.space" target="_blank">
-                                    More IO Games
-                                </a>
-                            </li>
-                        </ul>
+                    <div class="col">
+                        <div class="block">
+                            <ul class="list-inline text-center" style="margin-top:15px">
+                                <li class="list-inline-item align-middle">
+                                    <a href="#" data-toggle="modal" data-target="#about">
+                                        About
+                                    </a>
+                                </li>
+                                <li class="list-inline-item align-middle">
+                                    <a href="/privacy" data-toggle="modal" data-target="#privacy"
+                                       class="privacy-policy">
+                                        Privacy Policy
+                                    </a>
+                                </li>
+                                <li class="list-inline-item align-middle">
+                                    <a href="#" data-toggle="modal" data-target="#contacts">
+                                        Contacts
+                                    </a>
+                                </li>
+                                <li class="list-inline-item align-middle">
+                                    <a href="http://iogames.space" target="_blank">
+                                        More IO Games
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -484,8 +496,8 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
 
             highScore.empty();
 
-            response.forEach(function(player, key){
-                highScore.append('<li>'+(key +1)+': '+player.username+' <div class="float-right">'+player.score+'</div></li>');
+            response.forEach(function (player, key) {
+                highScore.append('<li>' + (key + 1) + ': ' + player.username + ' <div class="float-right">' + player.score + '</div></li>');
             });
 
             highScore.append('<div style="clear: both"></div>');
