@@ -35,7 +35,7 @@ let mg = require('nodemailer-mailgun-transport');
 
 let redis = require("redis");
 let client = redis.createClient({
-    host: process.env.REDIS_HOST ? process.env.REDIS_HOST : 'xplo-live.gvyafa.0001.euw1.cache.amazonaws.com',
+    host: process.env.REDIS_HOST ? process.env.REDIS_HOST : '83.99.174.70', //'xplo-live.gvyafa.0001.euw1.cache.amazonaws.com',
     port: process.env.REDIS_PORT ? process.env.REDIS_PORT : 6379
 });
 
@@ -753,6 +753,12 @@ class Player {
         this.start_time = (new Date()).getTime();
         this.last_move = null;
         this.last_ping = null;
+        this.last_pointer = {
+            x: null,
+            y: null,
+            worldx: null,
+            worldy: null
+        };
 
         this.createBody();
     }
@@ -905,6 +911,16 @@ setInterval(() => {
 
     for (let i = inactivePlayers.length - 1; i >= 0; i--) {
         game.player_list.splice(inactivePlayers[i], 1);
+    }
+
+    let leader = game.getLeader();
+    if (leader) {
+        game.leader.id = leader.id;
+        game.leader.score = leader.score;
+
+        game.io.emit('change-leader', {
+            id: game.leader.id
+        });
     }
 
     client.set('highscores', JSON.stringify(game.highscores));

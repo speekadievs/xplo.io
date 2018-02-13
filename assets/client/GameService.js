@@ -577,6 +577,16 @@ class GameService {
             worldY: data.y,
         };
 
+        let distance = PositionService.distanceToPointer(movePlayer.player, newPointer);
+        let speed = distance / 0.06;
+
+        movePlayer.rotation = PositionService.moveToPointer(movePlayer.player, speed, newPointer);
+
+        
+
+        movePlayer.map.x = (movePlayer.player.x / (10000 / 220)) - 20;
+        movePlayer.map.y = (movePlayer.player.y / (10000 / 220)) - 20;
+
         //check if the server enemy size is not equivalent to the client
         if (data.shield !== movePlayer.player.shield) {
             movePlayer.player.shield = data.shield;
@@ -587,14 +597,6 @@ class GameService {
             movePlayer.player.body.addCircle((movePlayer.player.size + (data.shield / 2)), 0, 0);
             movePlayer.player.body.data.shapes[0].sensor = true;
         }
-
-        let distance = PositionService.distanceToPointer(movePlayer.player, newPointer);
-        let speed = distance / 0.06;
-
-        movePlayer.rotation = PositionService.moveToPointer(movePlayer.player, speed, newPointer);
-
-        movePlayer.map.x = (movePlayer.player.x / (10000 / 220)) - 20;
-        movePlayer.map.y = (movePlayer.player.y / (10000 / 220)) - 20;
     }
 
     onInputReceived(data) {
@@ -608,13 +610,8 @@ class GameService {
         };
 
         let distance = PositionService.distanceToPointer(player, newPointer);
-
-        //we're receiving player position every 50ms. We're interpolating
-        //between the current position and the new position so that player
-        //does jerk.
         let speed = distance / 0.06;
 
-        //move to the new position.
         player.rotation = PositionService.moveToPointer(player, speed, newPointer);
 
         if (this.map_group) {
