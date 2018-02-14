@@ -39,6 +39,11 @@ let client = redis.createClient({
     port: process.env.REDIS_PORT ? process.env.REDIS_PORT : 6379
 });
 
+client.on("error", function (err) {
+    console.log("Redis Error " + err);
+    client = false;
+});
+
 //require p2 physics library in the server.
 let p2 = require('p2');
 
@@ -78,9 +83,13 @@ app.get('/privacy', function (req, res) {
 });
 
 app.get('/load/highscore', function (req, res) {
-    client.get("highscores", (err, reply) => {
-        res.send(reply ? JSON.parse(reply) : []);
-    });
+    if (client) {
+        client.get("highscores", (err, reply) => {
+            res.send(reply ? JSON.parse(reply) : []);
+        });
+    } else {
+        res.send([]);
+    }
 });
 
 app.post('/send/feedback', function (request, response) {
@@ -128,6 +137,7 @@ class GameService {
         this.food_list = [];
         this.mine_list = [];
         this.grenade_list = [];
+        this.buff_list = [];
 
         this.start_time = (new Date).getTime();
         this.last_time = null;
@@ -140,6 +150,7 @@ class GameService {
             max_food: 1500,
             max_mines: 50,
             max_grenades: 100,
+            max_buffs: 25,
             height: 10000,
             width: 10000,
             food_color: '0x49bcff',
@@ -152,6 +163,36 @@ class GameService {
             max_inactive: 120,
         };
 
+        this.colors = {
+            red: '0xbe0000',
+            green: '0x09be00'
+        };
+
+        this.buffs = [
+            {
+                type: 'shield_increase',
+                color: 'green',
+                time: 10
+            },
+            {
+                type: 'shield_decrease',
+                color: 'red',
+                time: 10
+            },
+            {
+                type: 'speed_increase',
+                color: 'green',
+                time: 10
+            },
+            {
+                type: 'speed_decrease',
+                color: 'red',
+                time: 10
+            },
+        ];
+
+        this.active_buffs = [];
+
         this.leader = {
             id: false,
             score: 0
@@ -159,11 +200,13 @@ class GameService {
 
         this.highscores = [];
 
-        client.get("highscores", (err, reply) => {
-            if (reply) {
-                this.highscores = JSON.parse(reply);
-            }
-        });
+        if (client) {
+            client.get("highscores", (err, reply) => {
+                if (reply) {
+                    this.highscores = JSON.parse(reply);
+                }
+            });
+        }
 
         this.world = world;
         this.io = io;
@@ -242,24 +285,6 @@ class GameService {
                 this.moving_grenades.splice(removableGrenades[i], 1);
             }
         }
-
-        let explodableMines = [];
-        this.mine_list.forEach((mine, key) => {
-            if (((currentTime - mine.dropped) / 1000) >= this.properties.mine_lifetime) {
-                explodableMines.push(key);
-
-                this.io.emit('explosion', {
-                    id: mine.id,
-                    type: 'mine'
-                });
-
-                this.removable_bodies.push(mine.body);
-            }
-        });
-
-        for (let i = explodableMines.length - 1; i >= 0; i--) {
-            this.mine_list.splice(explodableMines[i], 1);
-        }
     }
 
     heartbeat() {
@@ -267,6 +292,7 @@ class GameService {
         let currentShieldCount = 0;
         let currentMineCount = 0;
         let currentGrenadeCount = 0;
+        let currentBuffCount = this.buff_list.length;
 
         this.food_list.forEach(item => {
             if (item.type === 'mine-pickup') {
@@ -286,6 +312,8 @@ class GameService {
         this.addFood(missingShieldCount, 'shield-pickup');
         this.addFood(missingMineCount, 'mine-pickup');
         this.addFood(missingGrenadeCount, 'grenade-pickup');
+
+        this.addBuffs((this.properties.max_buffs - currentBuffCount));
 
         //physics stepping. We moved this into heartbeat
         this.handlePhysics();
@@ -329,6 +357,25 @@ class GameService {
 
         //set the food data back to client
         this.io.emit("item-update", pushableItems);
+    }
+
+    addBuffs(n) {
+        let pushableItems = [];
+        //create n number of foods to the game
+        for (let i = 0; i < n; i++) {
+            //create the unique id using node-uuid
+            let uniqueId = unique.v4();
+
+            let randomBuff = this.buffs[Math.floor(Math.random() * this.buffs.length)];
+
+            let buffEntity = new BuffObject(this.properties.width, this.properties.height, this.colors[randomBuff.color], randomBuff.type, uniqueId);
+
+            this.buff_list.push(buffEntity);
+            pushableItems.push(buffEntity);
+        }
+
+        //set the food data back to client
+        this.io.emit("buff-update", pushableItems);
     }
 
     findPlayer(id, returnKey) {
@@ -388,6 +435,22 @@ class GameService {
                     return i;
                 } else {
                     return this.grenade_list[i];
+                }
+            }
+        }
+
+        return false;
+    }
+
+    findBuff(id, returnKey) {
+        if (typeof returnKey === 'undefined') returnKey = false;
+
+        for (let i = 0; i < this.buff_list.length; i++) {
+            if (this.buff_list[i].id === id) {
+                if (returnKey) {
+                    return i;
+                } else {
+                    return this.buff_list[i];
                 }
             }
         }
@@ -457,6 +520,15 @@ class GameService {
         } else if (firstBody.game.type === 'grenade') {
             object = this.findGrenade(firstBody.game.id);
             objectBody = firstBody;
+        } else {
+            let buff = _.find(this.buffs, (buff) => {
+                return buff.type === firstBody.game.type;
+            });
+
+            if (buff) {
+                object = this.findBuff(firstBody.game.id);
+                objectBody = firstBody;
+            }
         }
 
         if (secondBody.game.type === 'player') {
@@ -471,6 +543,15 @@ class GameService {
         } else if (secondBody.game.type === 'grenade') {
             object = this.findGrenade(secondBody.game.id);
             objectBody = secondBody;
+        } else {
+            let buff = _.find(this.buffs, (buff) => {
+                return buff.type === secondBody.game.type;
+            });
+
+            if (buff) {
+                object = this.findBuff(secondBody.game.id);
+                objectBody = secondBody;
+            }
         }
 
         if (!object) {
@@ -489,48 +570,167 @@ class GameService {
         }
 
         if (object.type !== 'mine' && object.type !== 'grenade') {
-            if (object.type === 'shield-pickup') {
-                if (player.shield < this.properties.max_shield) {
-                    player.shield += 1;
+            let buff = _.find(this.buffs, (buff) => {
+                return buff.type === object.type;
+            });
 
-                    player.body.removeShape(player.shape);
+            if (buff) {
+                let activeBuff = _.find(this.active_buffs, (activeBuff) => {
+                    return activeBuff.user_id === player.id && activeBuff.type === buff.type;
+                });
 
-                    player.shape = new p2.Circle({
-                        radius: ((player.size + player.shield) / 2)
-                    });
+                if (activeBuff) {
+                    activeBuff.start_time = (new Date()).getTime();
+                } else {
+                    if (buff.type === 'shield_increase') {
+                        let oppositeBuff = _.findIndex(this.active_buffs, (activeBuff) => {
+                            return activeBuff.user_id === player.id && activeBuff.type === 'shield_decrease'
+                        });
 
-                    player.body.addShape(player.shape);
+                        if (oppositeBuff) {
+                            player.shield = player.shield * 2;
+                            if (player.shield > 100) {
+                                player.shield = 100;
+                            }
+
+                            this.active_buffs.splice(oppositeBuff, 1);
+                        }
+
+                        player.shield = player.shield * 2;
+
+                        player.body.removeShape(player.shape);
+
+                        player.shape = new p2.Circle({
+                            radius: ((player.size + player.shield) / 2)
+                        });
+
+                        player.body.addShape(player.shape);
+
+                        socket.emit("gained", {
+                            new_size: player.size,
+                            new_shield: player.shield
+                        });
+
+                    } else if (buff.type === 'shield_decrease') {
+                        let oppositeBuff = _.findIndex(this.active_buffs, (activeBuff) => {
+                            return activeBuff.user_id === player.id && activeBuff.type === 'shield_increase'
+                        });
+
+                        if (oppositeBuff) {
+                            if (player.shield < 20) {
+                                if (player.shield > 10) {
+                                    player.shield = 10;
+                                }
+                            } else {
+                                player.shield = player.shield / 2;
+                            }
+
+                            this.active_buffs.splice(oppositeBuff, 1);
+                        }
+
+                        if (player.shield < 20) {
+                            if (player.shield > 10) {
+                                player.shield = 10;
+                            }
+                        } else {
+                            player.shield = player.shield / 2;
+                        }
+
+                        player.body.removeShape(player.shape);
+
+                        player.shape = new p2.Circle({
+                            radius: ((player.size + player.shield) / 2)
+                        });
+
+                        player.body.addShape(player.shape);
+
+                        socket.emit("gained", {
+                            new_size: player.size,
+                            new_shield: player.shield
+                        });
+                    } else if (buff.type === 'speed_increase') {
+                        let oppositeBuff = _.findIndex(this.active_buffs, (activeBuff) => {
+                            return activeBuff.user_id === player.id && activeBuff.type === 'speed_decrease'
+                        });
+
+                        if (oppositeBuff) {
+                            player.speed = 500;
+
+                            this.active_buffs.splice(oppositeBuff, 1);
+                        }
+
+                        player.speed = player.speed + 200;
+
+                    } else if (buff.type === 'speed_decrease') {
+                        let oppositeBuff = _.findIndex(this.active_buffs, (activeBuff) => {
+                            return activeBuff.user_id === player.id && activeBuff.type === 'speed_increase'
+                        });
+
+                        if (oppositeBuff) {
+                            player.speed = 500;
+
+                            this.active_buffs.splice(oppositeBuff, 1);
+                        }
+
+                        player.speed = player.speed - 200;
+                    }
+
+                    object.user_id = player.id;
+                    object.start_time = (new Date()).getTime();
+
+                    this.active_buffs.push(object);
                 }
 
-                socket.emit("gained", {
-                    new_size: player.size,
-                    new_shield: player.shield
-                });
-            } else if (object.type === 'mine-pickup') {
-                object.user_id = player.id;
-                player.mines.push(object);
+                this.buff_list.splice(this.findBuff(object.id, true), 1);
 
-                socket.emit("mine-picked-up", {
-                    object: object
-                });
-            } else if (object.type === 'grenade-pickup') {
-                object.user_id = player.id;
-                player.grenades.push(object);
+                this.io.emit('buff-remove', object);
 
-                socket.emit("grenade-picked-up", {
-                    object: object
-                });
+                this.removable_bodies.push(objectBody);
+
+            } else {
+                if (object.type === 'shield-pickup') {
+                    if (player.shield < this.properties.max_shield) {
+                        player.shield += 1;
+
+                        player.body.removeShape(player.shape);
+
+                        player.shape = new p2.Circle({
+                            radius: ((player.size + player.shield) / 2)
+                        });
+
+                        player.body.addShape(player.shape);
+                    }
+
+                    socket.emit("gained", {
+                        new_size: player.size,
+                        new_shield: player.shield
+                    });
+                } else if (object.type === 'mine-pickup') {
+                    object.user_id = player.id;
+                    player.mines.push(object);
+
+                    socket.emit("mine-picked-up", {
+                        object: object
+                    });
+                } else if (object.type === 'grenade-pickup') {
+                    object.user_id = player.id;
+                    player.grenades.push(object);
+
+                    socket.emit("grenade-picked-up", {
+                        object: object
+                    });
+                }
+
+                player.score++;
+
+                this.food_list.splice(this.findItem(object.id, true), 1);
+
+                this.io.emit('item-remove', object);
+
+                this.removable_bodies.push(objectBody);
+
+                this.checkLeader(player);
             }
-
-            player.score++;
-
-            this.food_list.splice(this.findItem(object.id, true), 1);
-
-            this.io.emit('item-remove', object);
-
-            this.removable_bodies.push(objectBody);
-
-            this.checkLeader(player);
         } else {
             let killer = game.findPlayer(object.user_id);
 
@@ -727,6 +927,67 @@ class FoodObject {
     }
 }
 
+
+class BuffObject {
+    constructor(max_x, max_y, color, type, id, fixed_x, fixed_y) {
+        this.x = UtilService.getRandomInt(1010, max_x - 10);
+        this.y = UtilService.getRandomInt(1010, max_y - 10);
+        this.type = type;
+        this.id = id;
+        this.color = color;
+        this.size = 40;
+        this.line_size = 15;
+        this.powerup = false;
+
+        this.body = null;
+        this.shape = null;
+
+        this.createBody();
+    }
+
+    createBody() {
+        this.body = new p2.Body({
+            mass: 0,
+            position: [this.x, this.y],
+            fixedRotation: true,
+            collisionResponse: false
+        });
+
+        this.shape = new p2.Circle({
+            radius: ((this.size + this.line_size) / 2)
+        });
+
+        this.body.addShape(this.shape);
+
+        this.body.game = {
+            id: this.id,
+            type: this.type
+        };
+
+        this.body.gravityScale = 0;
+        this.body.shapes[0].sensor = true;
+
+        if (typeof this.user_id !== 'undefined') {
+            this.body.game.user_id = this.user_id;
+        }
+
+        world.addBody(this.body);
+    }
+
+    toJSON() {
+        return {
+            x: this.x,
+            y: this.y,
+            type: this.type,
+            id: this.id,
+            color: this.color,
+            size: this.size,
+            line_size: this.line_size,
+            powerup: this.powerup
+        }
+    }
+}
+
 class Player {
     constructor(id, username, startX, startY, startAngle) {
         this.id = id;
@@ -738,6 +999,7 @@ class Player {
         this.shield = 10;
         this.mines = [];
         this.grenades = [];
+        this.buffs = [];
         this.score = 0;
         this.type = 'player';
 
@@ -809,6 +1071,16 @@ class Player {
         return false;
     }
 
+    findBuff(id) {
+        for (let i = 0; i < this.buffs.length; i++) {
+            if (this.buffs[i].id === id) {
+                return this.buffs[i];
+            }
+        }
+
+        return false;
+    }
+
     removeMine(id) {
         let foundKey = -1;
 
@@ -863,6 +1135,103 @@ setInterval(() => {
         console.log('Garbage collection unavailable.  Pass --expose-gc when launching node to enable forced garbage collection.');
     }
 }, 30000);
+
+// Buff timer and exploding mines
+setInterval(() => {
+    let currentTime = (new Date()).getTime();
+
+    let explodableMines = [];
+    game.mine_list.forEach((mine, key) => {
+        if (((currentTime - mine.dropped) / 1000) >= game.properties.mine_lifetime) {
+            explodableMines.push(key);
+
+            game.io.emit('explosion', {
+                id: mine.id,
+                type: 'mine'
+            });
+
+            game.removable_bodies.push(mine.body);
+        }
+    });
+
+    for (let i = explodableMines.length - 1; i >= 0; i--) {
+        game.mine_list.splice(explodableMines[i], 1);
+    }
+
+    let removableBuffs = [];
+
+    game.active_buffs.forEach((buff, key) => {
+        let buffType = _.find(game.buffs, (buff_type) => {
+            return buff_type.type === buff.type;
+        });
+
+        if (buffType) {
+            if (((currentTime - buff.start_time) / 1000) >= buffType.time) {
+                let player = game.findPlayer(buff.user_id);
+
+                if (player) {
+                    let socket = game.io.sockets.connected[player.id];
+                    if (socket) {
+                        if (buff.type === 'shield_increase') {
+                            if (player.shield < 20) {
+                                if (player.shield > 10) {
+                                    player.shield = 10;
+                                }
+                            } else {
+                                player.shield = player.shield / 2;
+                            }
+
+                            player.body.removeShape(player.shape);
+
+                            player.shape = new p2.Circle({
+                                radius: ((player.size + player.shield) / 2)
+                            });
+
+                            player.body.addShape(player.shape);
+
+                            socket.emit("gained", {
+                                new_size: player.size,
+                                new_shield: player.shield
+                            });
+
+                        } else if (buff.type === 'shield_decrease') {
+                            player.shield = player.shield * 2;
+                            if (player.shield > 100) {
+                                player.shield = 100;
+                            }
+
+                            player.body.removeShape(player.shape);
+
+                            player.shape = new p2.Circle({
+                                radius: ((player.size + player.shield) / 2)
+                            });
+
+                            player.body.addShape(player.shape);
+
+                            socket.emit("gained", {
+                                new_size: player.size,
+                                new_shield: player.shield
+                            });
+                        } else if (buff.type === 'speed_increase') {
+                            player.speed = 500;
+                        } else if (buff.type === 'speed_decrease') {
+                            player.speed = 500;
+                        }
+                    }
+                }
+
+                removableBuffs.push(key);
+            }
+        } else {
+            game.log('Could not find buff type ' + buff.type, 'error');
+        }
+    });
+
+    for (let i = removableBuffs.length - 1; i >= 0; i--) {
+        game.active_buffs.splice(removableBuffs[i], 1);
+    }
+
+}, 1000);
 
 //Remove inactive players
 setInterval(() => {
@@ -923,7 +1292,9 @@ setInterval(() => {
         });
     }
 
-    client.set('highscores', JSON.stringify(game.highscores));
+    if (client) {
+        client.set('highscores', JSON.stringify(game.highscores));
+    }
 }, 30000);
 
 io.sockets.on('connection', function (socket) {
@@ -1049,6 +1420,7 @@ io.sockets.on('connection', function (socket) {
         }
 
         this.emit('item-update', game.food_list);
+        this.emit('buff-update', game.buff_list);
         this.emit('mine-update', game.mine_list);
         this.emit('grenade-update', game.grenade_list);
 

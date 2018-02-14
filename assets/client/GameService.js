@@ -1,6 +1,7 @@
 let PositionService = require('./PositionService');
 let RemotePlayer = require('./RemotePlayer.js');
 let FoodObject = require('./FoodObject.js');
+let BuffObject = require('./BuffObject.js');
 let MineObject = require('./MineObject.js');
 let GrenadeObject = require('./GrenadeObject.js');
 
@@ -20,6 +21,7 @@ class GameService {
 
         this.enemies = [];
         this.food_list = [];
+        this.buff_list = [];
         this.mine_list = [];
         this.grenade_list = [];
         this.engine = engine;
@@ -30,6 +32,9 @@ class GameService {
         this.mine_box = null;
         this.grenade_box = null;
         this.rank_box = null;
+
+        this.speed_buff = null;
+        this.shield_buff = null;
 
         this.can_drop = true;
         this.can_launch = true;
@@ -527,6 +532,22 @@ class GameService {
         return false;
     }
 
+    findBuff(id, returnKey) {
+        if (typeof returnKey === 'undefined') returnKey = false;
+
+        for (let i = 0; i < this.buff_list.length; i++) {
+            if (this.buff_list[i].id === id) {
+                if (returnKey) {
+                    return i;
+                }
+
+                return this.buff_list[i];
+            }
+        }
+
+        return false;
+    }
+
     findMine(id, returnKey) {
         if (typeof returnKey === 'undefined') returnKey = false;
 
@@ -582,7 +603,6 @@ class GameService {
 
         movePlayer.rotation = PositionService.moveToPointer(movePlayer.player, speed, newPointer);
 
-        
 
         movePlayer.map.x = (movePlayer.player.x / (10000 / 220)) - 20;
         movePlayer.map.y = (movePlayer.player.y / (10000 / 220)) - 20;
@@ -759,7 +779,42 @@ class GameService {
         });
     }
 
+    onBuffUpdate(data) {
+        if (!this.properties.in_game) {
+            return false;
+        }
+
+        data.forEach(item => {
+            this.buff_list.push(new BuffObject(item.id, item.type, item.x, item.y, item.color, item.size, item.line_size, this));
+        });
+    }
+
+    onBuffRemove(data) {
+        if (!this.properties.in_game) {
+            return false;
+        }
+
+        let removeItem = this.findBuff(data.id);
+        let removeItemKey = this.findBuff(data.id, true);
+
+        if (!removeItem) {
+            console.warn('Could not find the buff with the ID ' + data.id);
+            return false;
+        }
+
+        this.buff_list.splice(this.buff_list.indexOf(removeItem), 1);
+
+        //destroy the phaser object
+        removeItem.item.destroy(true, false);
+        removeItem.buffIcon.destroy(true, false);
+    }
+
+
     onItemRemove(data) {
+        if (!this.properties.in_game) {
+            return false;
+        }
+
         let removeItem = this.findItem(data.id);
 
         if (!removeItem) {
@@ -774,6 +829,10 @@ class GameService {
     }
 
     onRemovePlayer(data) {
+        if (!this.properties.in_game) {
+            return false;
+        }
+
         if (data.id === player.id) {
             return false;
         }
@@ -793,6 +852,10 @@ class GameService {
     }
 
     onGetLeaderboard(data) {
+        if (!this.properties.in_game) {
+            return false;
+        }
+
         for (let i = 0; i < 10; i++) {
             this.leaderboard['line_' + (i + 1) + '_left'].setText('');
             this.leaderboard['line_' + (i + 1) + '_right'].setText('');
@@ -899,6 +962,14 @@ class GameService {
             item.item.destroy();
         });
         this.food_list = [];
+
+        this.buff_list.forEach(item => {
+            item.item.destroy();
+            if (item.buffIcon) {
+                item.buffIcon.destroy();
+            }
+        });
+        this.buff_list = [];
 
         this.mine_list.forEach(item => {
             item.item.destroy();

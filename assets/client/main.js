@@ -76,6 +76,13 @@ window.chooseRegion = function (region) {
                 engine.load.image('bg', '/images/bg.png');
                 engine.load.image('arena', '/images/arena.png');
                 engine.load.image('shield', '/images/shield.png');
+
+                engine.load.image('shield_increase', '/images/shield_increase.png');
+                engine.load.image('shield_decrease', '/images/shield_decrease.png');
+                engine.load.image('speed_increase', '/images/speed_increase.png');
+                engine.load.image('speed_decrease', '/images/speed_decrease.png');
+
+
                 engine.load.spritesheet('explosion', '/images/explosion.png', 128, 128);
                 //engine.load.image('doge', '/images/doge.jpg');
             },
@@ -148,6 +155,14 @@ window.chooseRegion = function (region) {
                     // check for item update
                     socket.on('item-update', function (data) {
                         game.onItemUpdate(data);
+                    });
+
+                    socket.on('buff-update', function (data) {
+                        game.onBuffUpdate(data);
+                    });
+
+                    socket.on('buff-remove', function (data) {
+                        game.onBuffRemove(data);
                     });
 
                     socket.on('mine-update', function (data) {
