@@ -8,6 +8,6 @@ cp deploy/game.service /lib/systemd/system/
 
 systemctl daemon-reload
 
-systemtl enable game
+systemctl enable game
 
 systemctl start game

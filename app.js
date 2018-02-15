@@ -1160,7 +1160,7 @@ setInterval(() => {
         game.mine_list.splice(explodableMines[i], 1);
     }
 
-    this.player_list.forEach(player => {
+    game.player_list.forEach(player => {
         let removableBuffs = [];
 
         player.buffs.forEach((buff, key) => {

@@ -9,7 +9,7 @@ Environment=REDIS_HOST=db.xplo.io
 Environment=REDIS_PORT=6379
 Type=simple
 User=ubuntu
-ExecStart=/usr/bin/node --expose-gc /var/www/app.js
+ExecStart=/usr/bin/node --expose-gc /var/www/html/app.js
 Restart=on-failure
 
 [Install]
