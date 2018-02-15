@@ -960,6 +960,13 @@ class GameService {
                 jQuery('#home').fadeIn();
                 jQuery('#login').hide();
                 jQuery('#dead').fadeIn();
+
+                window.aiptag.cmd.display.push(function () {
+                    aipDisplayTag.refresh('xplo-io_300x250');
+                });
+
+                ga('set', 'page', '/died');
+                ga('send', 'pageview');
             }, 1000);
         }
     }

@@ -211,6 +211,10 @@ window.chooseRegion = function (region) {
                             jQuery('#home').fadeIn();
                             jQuery('#login').hide();
                             jQuery('#disconnected').fadeIn();
+
+                            window.aiptag.cmd.display.push(function () {
+                                aipDisplayTag.refresh('xplo-io_300x250');
+                            });
                         }
                     });
                 }
@@ -371,12 +375,22 @@ window.chooseRegion = function (region) {
             } else {
                 window.startGame();
             }
+
+            ga('set', 'page', '/playing');
+            ga('send', 'pageview');
         });
 
         jQuery(document).on('click', '#play-again-button', function () {
             jQuery('#home').fadeIn();
             jQuery('#dead').hide();
             jQuery('#login').fadeIn();
+
+            window.aiptag.cmd.display.push(function () {
+                aipDisplayTag.refresh('xplo-io_300x250');
+            });
+
+            ga('set', 'page', '/');
+            ga('send', 'pageview');
         });
 
         jQuery(document).on('click', '#reconnect', function () {

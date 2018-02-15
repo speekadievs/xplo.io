@@ -153,10 +153,10 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
                             <button type="button" class="btn btn-success btn-lg region" data-id="auto">
                                 Auto
                             </button>
-                            <button type="button" class="btn btn-success btn-lg region" data-id="us-east-1">
+                            <button type="button" class="btn btn-success btn-lg region" data-id="us-1">
                                 USA
                             </button>
-                            <button type="button" class="btn btn-success btn-lg region" data-id="eu-west-1">
+                            <button type="button" class="btn btn-success btn-lg region" data-id="eu-1">
                                 Europe
                             </button>
                         </div>
@@ -274,6 +274,7 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
                             <h5>v0.2.0</h5>
                             <ul>
                                 <li>Added positive and negative powerups</li>
+                                <li>Added 4 second god mod for newly spawned players</li>
                                 <li>Small performance updates</li>
                             </ul>
                             <hr>
@@ -584,5 +585,9 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
 
         window.chooseRegion(region);
     });
+
+    window.onbeforeunload = function () {
+        return false;
+    }
 </script>
 </html>

@@ -1,9 +1,13 @@
 #!/bin/sh
 
-stop game
-
-cp deploy/game.conf /etc/init
-
 npm install
 
-start game
+systemctl stop game
+
+cp deploy/game.service /lib/systemd/system/
+
+systemctl daemon-reload
+
+systemtl enable game
+
+systemctl start game

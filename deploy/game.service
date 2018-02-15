@@ -1,0 +1,16 @@
+[Unit]
+Description=XPLO.io
+Documentation=http://xplo.io
+After=network.target
+
+[Service]
+Environment=PORT=80
+Environment=REDIS_HOST=db.xplo.io
+Environment=REDIS_PORT=6379
+Type=simple
+User=ubuntu
+ExecStart=/usr/bin/node --expose-gc /var/www/app.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
