@@ -26,6 +26,9 @@ class RemotePlayer {
         this.player.id = this.id;
         this.player.shield = shield;
 
+        this.player.alpha = 0;
+        this.god_mode = game.engine.add.tween(this.player).to( { alpha: 1 }, 500, Phaser.Easing.Linear.None, true, 0, 1000, true);
+
         // draw a shape
         game.engine.physics.p2.enableBody(this.player);
         this.player.body.clearShapes();

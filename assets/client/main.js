@@ -193,6 +193,10 @@ window.chooseRegion = function (region) {
                         game.onChangeLeader(data);
                     });
 
+                    socket.on('stop-god-mode', function (data) {
+                        game.onStopGodMode(data);
+                    });
+
                     socket.on('disconnect', function () {
                         if (window.switchingRegion) {
                             jQuery('#home').fadeIn();

@@ -575,7 +575,7 @@ class GameService {
             });
 
             if (buff) {
-                let activeBuff = _.find(this.active_buffs, (activeBuff) => {
+                let activeBuff = _.find(player.buffs, (activeBuff) => {
                     return activeBuff.user_id === player.id && activeBuff.type === buff.type;
                 });
 
@@ -583,20 +583,22 @@ class GameService {
                     activeBuff.start_time = (new Date()).getTime();
                 } else {
                     if (buff.type === 'shield_increase') {
-                        let oppositeBuff = _.findIndex(this.active_buffs, (activeBuff) => {
+                        if (!player.old_increase_shield) {
+                            player.old_increase_shield = player.shield;
+                        }
+
+                        let oppositeBuff = _.findIndex(player.buffs, (activeBuff) => {
                             return activeBuff.user_id === player.id && activeBuff.type === 'shield_decrease'
                         });
 
                         if (oppositeBuff) {
-                            player.shield = player.shield * 2;
-                            if (player.shield > 100) {
-                                player.shield = 100;
-                            }
+                            player.shield = player.old_decrease_shield;
+                            player.old_decrease_shield = false;
 
-                            this.active_buffs.splice(oppositeBuff, 1);
+                            player.buffs.splice(oppositeBuff, 1);
                         }
 
-                        player.shield = player.shield * 2;
+                        player.shield = this.properties.max_shield * 2;
 
                         player.body.removeShape(player.shape);
 
@@ -612,29 +614,22 @@ class GameService {
                         });
 
                     } else if (buff.type === 'shield_decrease') {
-                        let oppositeBuff = _.findIndex(this.active_buffs, (activeBuff) => {
+                        if (!player.old_decrease_shield) {
+                            player.old_decrease_shield = player.shield;
+                        }
+
+                        let oppositeBuff = _.findIndex(player.buffs, (activeBuff) => {
                             return activeBuff.user_id === player.id && activeBuff.type === 'shield_increase'
                         });
 
                         if (oppositeBuff) {
-                            if (player.shield < 20) {
-                                if (player.shield > 10) {
-                                    player.shield = 10;
-                                }
-                            } else {
-                                player.shield = player.shield / 2;
-                            }
+                            player.shield = player.old_increase_shield;
+                            player.old_increase_shield = false;
 
-                            this.active_buffs.splice(oppositeBuff, 1);
+                            player.buffs.splice(oppositeBuff, 1);
                         }
 
-                        if (player.shield < 20) {
-                            if (player.shield > 10) {
-                                player.shield = 10;
-                            }
-                        } else {
-                            player.shield = player.shield / 2;
-                        }
+                        player.shield = 10;
 
                         player.body.removeShape(player.shape);
 
@@ -649,36 +644,36 @@ class GameService {
                             new_shield: player.shield
                         });
                     } else if (buff.type === 'speed_increase') {
-                        let oppositeBuff = _.findIndex(this.active_buffs, (activeBuff) => {
+                        let oppositeBuff = _.findIndex(player.buffs, (activeBuff) => {
                             return activeBuff.user_id === player.id && activeBuff.type === 'speed_decrease'
                         });
 
                         if (oppositeBuff) {
                             player.speed = 500;
 
-                            this.active_buffs.splice(oppositeBuff, 1);
+                            player.buffs.splice(oppositeBuff, 1);
                         }
 
-                        player.speed = player.speed + 200;
+                        player.speed = player.speed + 300;
 
                     } else if (buff.type === 'speed_decrease') {
-                        let oppositeBuff = _.findIndex(this.active_buffs, (activeBuff) => {
+                        let oppositeBuff = _.findIndex(player.buffs, (activeBuff) => {
                             return activeBuff.user_id === player.id && activeBuff.type === 'speed_increase'
                         });
 
                         if (oppositeBuff) {
                             player.speed = 500;
 
-                            this.active_buffs.splice(oppositeBuff, 1);
+                            player.buffs.splice(oppositeBuff, 1);
                         }
 
-                        player.speed = player.speed - 200;
+                        player.speed = player.speed - 300;
                     }
 
                     object.user_id = player.id;
                     object.start_time = (new Date()).getTime();
 
-                    this.active_buffs.push(object);
+                    player.buffs.push(object);
                 }
 
                 this.buff_list.splice(this.findBuff(object.id, true), 1);
@@ -689,22 +684,24 @@ class GameService {
 
             } else {
                 if (object.type === 'shield-pickup') {
-                    if (player.shield < this.properties.max_shield) {
-                        player.shield += 1;
+                    if (!player.old_decrease_shield) {
+                        if (player.shield < this.properties.max_shield) {
+                            player.shield += 1;
 
-                        player.body.removeShape(player.shape);
+                            player.body.removeShape(player.shape);
 
-                        player.shape = new p2.Circle({
-                            radius: ((player.size + player.shield) / 2)
+                            player.shape = new p2.Circle({
+                                radius: ((player.size + player.shield) / 2)
+                            });
+
+                            player.body.addShape(player.shape);
+                        }
+
+                        socket.emit("gained", {
+                            new_size: player.size,
+                            new_shield: player.shield
                         });
-
-                        player.body.addShape(player.shape);
                     }
-
-                    socket.emit("gained", {
-                        new_size: player.size,
-                        new_shield: player.shield
-                    });
                 } else if (object.type === 'mine-pickup') {
                     object.user_id = player.id;
                     player.mines.push(object);
@@ -736,6 +733,10 @@ class GameService {
 
             if (!player) {
                 this.log('Could not find player and killer', 'error');
+                return false;
+            }
+
+            if (player.is_god) {
                 return false;
             }
 
@@ -1002,6 +1003,7 @@ class Player {
         this.buffs = [];
         this.score = 0;
         this.type = 'player';
+        this.is_god = true;
 
         this.body = false;
         this.shape = false;
@@ -1158,28 +1160,22 @@ setInterval(() => {
         game.mine_list.splice(explodableMines[i], 1);
     }
 
-    let removableBuffs = [];
+    this.player_list.forEach(player => {
+        let removableBuffs = [];
 
-    game.active_buffs.forEach((buff, key) => {
-        let buffType = _.find(game.buffs, (buff_type) => {
-            return buff_type.type === buff.type;
-        });
+        player.buffs.forEach((buff, key) => {
+            let buffType = _.find(game.buffs, (buff_type) => {
+                return buff_type.type === buff.type;
+            });
 
-        if (buffType) {
-            if (((currentTime - buff.start_time) / 1000) >= buffType.time) {
-                let player = game.findPlayer(buff.user_id);
+            if (buffType) {
+                if (((currentTime - buff.start_time) / 1000) >= buffType.time) {
 
-                if (player) {
                     let socket = game.io.sockets.connected[player.id];
                     if (socket) {
                         if (buff.type === 'shield_increase') {
-                            if (player.shield < 20) {
-                                if (player.shield > 10) {
-                                    player.shield = 10;
-                                }
-                            } else {
-                                player.shield = player.shield / 2;
-                            }
+                            player.shield = player.old_increase_shield;
+                            player.old_increase_shield = false;
 
                             player.body.removeShape(player.shape);
 
@@ -1195,10 +1191,8 @@ setInterval(() => {
                             });
 
                         } else if (buff.type === 'shield_decrease') {
-                            player.shield = player.shield * 2;
-                            if (player.shield > 100) {
-                                player.shield = 100;
-                            }
+                            player.shield = player.old_decrease_shield;
+                            player.old_decrease_shield = false;
 
                             player.body.removeShape(player.shape);
 
@@ -1218,18 +1212,18 @@ setInterval(() => {
                             player.speed = 500;
                         }
                     }
-                }
 
-                removableBuffs.push(key);
+                    removableBuffs.push(key);
+                }
+            } else {
+                game.log('Could not find buff type ' + buff.type, 'error');
             }
-        } else {
-            game.log('Could not find buff type ' + buff.type, 'error');
+        });
+
+        for (let i = removableBuffs.length - 1; i >= 0; i--) {
+            player.buffs.splice(removableBuffs[i], 1);
         }
     });
-
-    for (let i = removableBuffs.length - 1; i >= 0; i--) {
-        game.active_buffs.splice(removableBuffs[i], 1);
-    }
 
 }, 1000);
 
@@ -1359,6 +1353,17 @@ io.sockets.on('connection', function (socket) {
         }
 
         newPlayer.id = this.id;
+
+        setTimeout(() => {
+            newPlayer.is_god = false;
+            this.emit('stop-god-mode', {
+                id: this.id,
+            });
+
+            this.broadcast.emit('stop-god-mode', {
+                id: this.id,
+            });
+        }, 4000);
 
         this.emit('create-player', {
             id: newPlayer.id,
@@ -1655,7 +1660,7 @@ io.sockets.on('connection', function (socket) {
     });
 });
 
-server.listen(process.env.PORT || 2000);
+server.listen(process.env.PORT || 80);
 
 game.log("----------------------------");
 game.log("Server started.");

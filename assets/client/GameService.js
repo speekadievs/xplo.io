@@ -168,6 +168,9 @@ class GameService {
         player.mines = [];
         player.grenades = [];
 
+        player.alpha = 0;
+        player.god_mode = this.engine.add.tween(player).to( { alpha: 1 }, 500, Phaser.Easing.Linear.None, true, 0, 1000, true);
+
         // add body to the shape
         this.engine.physics.p2.enableBody(player);
         player.body.clearShapes();
@@ -914,6 +917,20 @@ class GameService {
                     enemy.resetMap(this);
                 }
             });
+        }
+    }
+
+    onStopGodMode(data) {
+        if (data.id === player.id) {
+            player.god_mode.stop();
+            player.alpha = 1;
+        } else {
+            this.enemies.forEach(enemy => {
+                if (enemy.id === data.id) {
+                    enemy.god_mode.stop();
+                    enemy.player.alpha = 1;
+                }
+            })
         }
     }
 
