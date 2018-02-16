@@ -33,8 +33,12 @@ class GameService {
         this.grenade_box = null;
         this.rank_box = null;
 
-        this.speed_buff = null;
-        this.shield_buff = null;
+        this.buffs = {
+            shield_increase: null,
+            shield_decrease: null,
+            speed_increase: null,
+            speed_decrease: null,
+        };
 
         this.can_drop = true;
         this.can_launch = true;
@@ -169,7 +173,7 @@ class GameService {
         player.grenades = [];
 
         player.alpha = 0;
-        player.god_mode = this.engine.add.tween(player).to( { alpha: 1 }, 500, Phaser.Easing.Linear.None, true, 0, 1000, true);
+        player.god_mode = this.engine.add.tween(player).to({alpha: 1}, 500, Phaser.Easing.Linear.None, true, 0, 1000, true);
 
         // add body to the shape
         this.engine.physics.p2.enableBody(player);
@@ -181,6 +185,68 @@ class GameService {
         this.engine.camera.x = data.x;
         this.engine.camera.y = data.y;
         this.engine.camera.follow(player, Phaser.Camera.FOLLOW_LOCKON, 0.5, 0.5);
+
+        //Create buff boxes
+        this.buffs.shield_increase = this.engine.add.group();
+        this.buffs.shield_increase.fixedToCamera = true;
+        this.buffs.shield_increase.cameraOffset.setTo(240, 20);
+
+        let shieldIncrease = this.engine.add.graphics(0, 0, this.buffs.shield_increase);
+        shieldIncrease.beginFill(0x09be00);
+        shieldIncrease.drawRoundedRect(0, 0, 40, 40, 5);
+        shieldIncrease.alpha = 0.5;
+
+        let shieldIncreaseIcon = this.engine.add.sprite(20, 20, 'shield_increase', this.buffs.shield_increase);
+        shieldIncreaseIcon.anchor.setTo(0.5, 0.5);
+
+        shieldIncrease.addChild(shieldIncreaseIcon);
+
+        this.buffs.shield_decrease = this.engine.add.group();
+        this.buffs.shield_decrease.fixedToCamera = true;
+        this.buffs.shield_decrease.cameraOffset.setTo(240, 20);
+
+        let shieldDecrease = this.engine.add.graphics(0, 0, this.buffs.shield_decrease);
+        shieldDecrease.beginFill(0xbe0000);
+        shieldDecrease.drawRoundedRect(0, 0, 40, 40, 5);
+        shieldDecrease.alpha = 0.5;
+
+        let shieldDecreaseIcon = this.engine.add.sprite(20, 20, 'shield_decrease', this.buffs.shield_decrease);
+        shieldDecreaseIcon.anchor.setTo(0.5, 0.5);
+
+        shieldDecrease.addChild(shieldDecreaseIcon);
+
+        this.buffs.speed_increase = this.engine.add.group();
+        this.buffs.speed_increase.fixedToCamera = true;
+        this.buffs.speed_increase.cameraOffset.setTo(300, 20);
+
+        let speedIncrease = this.engine.add.graphics(0, 0, this.buffs.speed_increase);
+        speedIncrease.beginFill(0x09be00);
+        speedIncrease.drawRoundedRect(0, 0, 40, 40, 5);
+        speedIncrease.alpha = 0.5;
+
+        let speedIncreaseIcon = this.engine.add.sprite(20, 20, 'speed_increase', this.buffs.speed_increase);
+        speedIncreaseIcon.anchor.setTo(0.5, 0.5);
+
+        speedIncrease.addChild(speedIncreaseIcon);
+
+        this.buffs.speed_decrease = this.engine.add.group();
+        this.buffs.speed_decrease.fixedToCamera = true;
+        this.buffs.speed_decrease.cameraOffset.setTo(300, 20);
+
+        let speedDecrease = this.engine.add.graphics(0, 0, this.buffs.speed_decrease);
+        speedDecrease.beginFill(0xbe0000);
+        speedDecrease.drawRoundedRect(0, 0, 40, 40, 5);
+        speedDecrease.alpha = 0.5;
+
+        let speedDecreaseIcon = this.engine.add.sprite(20, 20, 'speed_decrease', this.buffs.speed_decrease);
+        speedDecreaseIcon.anchor.setTo(0.5, 0.5);
+
+        speedDecrease.addChild(speedDecreaseIcon);
+
+        this.buffs.shield_increase.visible = false;
+        this.buffs.shield_decrease.visible = false;
+        this.buffs.speed_increase.visible = false;
+        this.buffs.speed_decrease.visible = false;
 
         //Create leaderboard box
         this.leaderboard = this.engine.add.group();
@@ -934,6 +1000,14 @@ class GameService {
         }
     }
 
+    onShowBuff(data) {
+        this.buffs[data.type].visible = true;
+    }
+
+    onHideBuff(data) {
+        this.buffs[data.type].visible = false;
+    }
+
     onKilled(data) {
         if (player) {
             player.text.destroy();
@@ -1011,6 +1085,12 @@ class GameService {
         this.shield_box.destroy();
         this.mine_box.destroy();
         this.grenade_box.destroy();
+
+        for (let key in this.buffs) {
+            if (this.buffs.hasOwnProperty(key)) {
+                this.buffs[key].destroy();
+            }
+        }
 
         this.can_drop = true;
         this.can_launch = true;

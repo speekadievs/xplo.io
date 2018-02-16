@@ -197,6 +197,14 @@ window.chooseRegion = function (region) {
                         game.onStopGodMode(data);
                     });
 
+                    socket.on('show-buff', function (data) {
+                        game.onShowBuff(data);
+                    });
+
+                    socket.on('hide-buff', function (data) {
+                        game.onHideBuff(data);
+                    });
+
                     socket.on('disconnect', function () {
                         if (window.switchingRegion) {
                             jQuery('#home').fadeIn();

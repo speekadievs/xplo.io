@@ -596,9 +596,13 @@ class GameService {
                             player.old_decrease_shield = false;
 
                             player.buffs.splice(oppositeBuff, 1);
+
+                            socket.emit('hide-buff', {
+                                type: 'shield_decrease'
+                            });
                         }
 
-                        player.shield = this.properties.max_shield * 2;
+                        player.shield = this.properties.max_shield * 2 - 10;
 
                         player.body.removeShape(player.shape);
 
@@ -627,6 +631,10 @@ class GameService {
                             player.old_increase_shield = false;
 
                             player.buffs.splice(oppositeBuff, 1);
+
+                            socket.emit('hide-buff', {
+                                type: 'shield_increase'
+                            });
                         }
 
                         player.shield = 10;
@@ -652,6 +660,10 @@ class GameService {
                             player.speed = 500;
 
                             player.buffs.splice(oppositeBuff, 1);
+
+                            socket.emit('hide-buff', {
+                                type: 'speed_decrease'
+                            });
                         }
 
                         player.speed = player.speed + 300;
@@ -665,6 +677,10 @@ class GameService {
                             player.speed = 500;
 
                             player.buffs.splice(oppositeBuff, 1);
+
+                            socket.emit('hide-buff', {
+                                type: 'speed_increase'
+                            });
                         }
 
                         player.speed = player.speed - 300;
@@ -675,6 +691,10 @@ class GameService {
                     object.time = buff.time;
 
                     player.buffs.push(object);
+
+                    socket.emit('show-buff', {
+                        type: object.type
+                    });
                 }
 
                 this.buff_list.splice(this.findBuff(object.id, true), 1);
@@ -871,8 +891,8 @@ class FoodObject {
             fixed_y = false;
         }
 
-        this.x = fixed_x ? fixed_x : UtilService.getRandomInt(1010, max_x - 10);
-        this.y = fixed_y ? fixed_y : UtilService.getRandomInt(1010, max_y - 10);
+        this.x = fixed_x ? fixed_x : UtilService.getRandomInt(1020, max_x - 20);
+        this.y = fixed_y ? fixed_y : UtilService.getRandomInt(1020, max_y - 20);
         this.type = type;
         this.id = id;
         this.color = color;
@@ -932,8 +952,8 @@ class FoodObject {
 
 class BuffObject {
     constructor(max_x, max_y, color, type, id, fixed_x, fixed_y) {
-        this.x = UtilService.getRandomInt(1010, max_x - 10);
-        this.y = UtilService.getRandomInt(1010, max_y - 10);
+        this.x = UtilService.getRandomInt(1050, max_x - 50);
+        this.y = UtilService.getRandomInt(1050, max_y - 50);
         this.type = type;
         this.id = id;
         this.color = color;
@@ -1206,6 +1226,10 @@ setInterval(() => {
                         player.speed = 500;
                     }
                 }
+
+                socket.emit('hide-buff', {
+                    type: buff.type
+                });
 
                 removableBuffs.push(key);
             }
