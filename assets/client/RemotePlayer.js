@@ -1,5 +1,5 @@
 class RemotePlayer {
-    constructor(id, username, startx, starty, startSize, start_angle, color, shield, game, socket) {
+    constructor(id, username, startx, starty, startSize, start_angle, color, shield, is_god, game, socket) {
         this.x = startx;
         this.y = starty;
 
@@ -27,7 +27,11 @@ class RemotePlayer {
         this.player.shield = shield;
 
         this.player.alpha = 0;
-        this.god_mode = game.engine.add.tween(this.player).to( { alpha: 1 }, 500, Phaser.Easing.Linear.None, true, 0, 1000, true);
+
+        this.god_mode = null;
+        if (is_god) {
+            this.god_mode = game.engine.add.tween(this.player).to({alpha: 1}, 500, Phaser.Easing.Linear.None, true, 0, 1000, true);
+        }
 
         // draw a shape
         game.engine.physics.p2.enableBody(this.player);

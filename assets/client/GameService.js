@@ -564,7 +564,7 @@ class GameService {
     }
 
     newEnemy(data) {
-        let newEnemy = new RemotePlayer(data.id, data.username, data.x, data.y, data.size, data.angle, data.color, data.shield, this, this.socket);
+        let newEnemy = new RemotePlayer(data.id, data.username, data.x, data.y, data.size, data.angle, data.color, data.shield, data.is_god, this, this.socket);
 
         this.enemies.push(newEnemy);
     }

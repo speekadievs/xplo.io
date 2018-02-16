@@ -1403,7 +1403,8 @@ io.sockets.on('connection', function (socket) {
             angle: newPlayer.angle,
             size: newPlayer.size,
             color: newPlayer.color,
-            shield: newPlayer.shield
+            shield: newPlayer.shield,
+            is_god: existingPlayer.is_god
         };
 
         //send to the new player about everyone who is already connected.
@@ -1418,7 +1419,8 @@ io.sockets.on('connection', function (socket) {
                 angle: existingPlayer.angle,
                 size: existingPlayer.size,
                 color: existingPlayer.color,
-                shield: existingPlayer.shield
+                shield: existingPlayer.shield,
+                is_god: existingPlayer.is_god
             };
 
             //send message to the sender-client only
@@ -1621,7 +1623,7 @@ io.sockets.on('connection', function (socket) {
         grenade.meta = {
             start: (new Date()).getTime(),
             player_angle: player.body.angle,
-            speed: player.speed * 3
+            speed: 1500
         };
 
         grenade.createBody();
