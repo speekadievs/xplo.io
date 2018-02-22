@@ -18,14 +18,14 @@
     <meta property="og:title" content="Xplo.io"/>
     <meta property="og:description"
           content="The most explosive game. Blow up other players and stay alive as long as possible"/>
-    <meta property="og:image" content="http://xplo.io/images/social_big.png"/>
+    <meta property="og:image" content="http://xplo.io/images/social_new_big.png"/>
 
     <meta name="twitter:card" content="summary">
     <meta name="twitter:site" content="@xplo_io">
     <meta name="twitter:title" content="Xplo.io">
     <meta name="twitter:description"
           content="The most explosive game. Blow up other players and stay alive as long as possible">
-    <meta name="twitter:image" content="http://xplo.io/images/social_big.png">
+    <meta name="twitter:image" content="http://xplo.io/images/social_new_big.png">
 
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
@@ -117,7 +117,7 @@
         </div>
     </div>
     <div class="version-container">
-        v0.2.0
+        v0.3.0
     </div>
     <div class="cross-promote">
         <iframe id="IOG_CP" scrolling="no" frameborder="0" width="200"
@@ -159,6 +159,9 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
                             </button>
                             <button type="button" class="btn btn-success btn-lg region" data-id="eu-1">
                                 Europe
+                            </button>
+                            <button type="button" class="btn btn-success btn-lg region" data-id="asia-1">
+                                Asia
                             </button>
                         </div>
                     </div>
@@ -218,6 +221,20 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
                                    placeholder="Username...">
                         </div>
                         <div class="form-group text-center">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-secondary btn-sm game-mode active"
+                                        data-id="classic">
+                                    Classic
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm game-mode" data-id="team_dm">
+                                    Team DM
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm game-mode" data-id="ctf">
+                                    Capture the Flag
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group text-center">
                             <button id="play-button" type="button" class="btn btn-success btn-sm" style="width:150px">
                                 Play Game
                             </button>
@@ -244,7 +261,32 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
                         <div class="addthis_inline_share_toolbox"></div>
                     </div>
                     <div class="form-group">
-                        <button id="play-again-button" type="button" class="btn btn-primary" style="width:150px">
+                        <button type="button" class="play-again-button btn btn-primary" style="width:150px">
+                            Play Again
+                        </button>
+                    </div>
+                </div>
+                <div id="match-ended" class="text-center" style="display:none;padding:40px">
+                    <div class="form-group">
+                        <h2 style="margin-bottom: 40px">Match Ended</h2>
+                        <h4 id="red-won" style="display:none">Team <span style="color:red">RED</span> won!</h4>
+                        <h4 id="blue-won" style="display:none">Team <span style="color:blue">BLUE</span> won!</h4>
+                        <h4 id="both-won" style="display:none">It was a Tie</h4>
+
+                        <div class="text-center" style="display:inline-block;margin-right:20px">
+                            <h4 style="color:red">RED</h4>
+                            <h5 id="red-score">0</h5>
+                        </div>
+                        <div class="text-center" style="display:inline-block;margin-left:20px">
+                            <h4 style="color:blue">BLUE</h4>
+                            <h5 id="blue-score">0</h5>
+                        </div>
+                    </div>
+                    <div class="best-player form-group" style="display:none; margin-top:40px;">
+                        The best player was: <span class="username"></span><br>with the score: <span class="score"></span>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="play-again-button btn btn-primary" style="width:150px">
                             Play Again
                         </button>
                     </div>
@@ -272,6 +314,13 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
                 <div id="changelog" class="col-sm-6">
                     <div class="block" style="height:290px;overflow-y: auto;">
                         <div style="padding:10px">
+                            <h5>v0.3.0</h5>
+                            <ul>
+                                <li>Added new gamemode - Team DM</li>
+                                <li>Added new gamemode - Capture the Flag</li>
+                                <li>Added changable skins</li>
+                                <li>Major server optimisations</li>
+                            </ul>
                             <h5>v0.2.0</h5>
                             <ul>
                                 <li>Added positive and negative powerups</li>
@@ -426,7 +475,9 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
                     </h2>
                     <ul class="list-unstyled">
                         <li><img src="images/shield_increase.png"> - Sets shield to 200% for 10 seconds</li>
-                        <li><img src="images/shield_decrease.png"> - Sets shield to 0% and prevents shield increase for 10 seconds</li>
+                        <li><img src="images/shield_decrease.png"> - Sets shield to 0% and prevents shield increase for
+                            10 seconds
+                        </li>
                         <li><img src="images/speed_increase.png"> - Increases movement speed for 10 seconds</li>
                         <li><img src="images/speed_decrease.png"> - Decreases movement speed for 10 seconds</li>
                     </ul>
@@ -597,8 +648,25 @@ box-shadow:0 3px 6px rgba(0,0,0,.25),0 3px 6px rgba(0,0,0,.4);">
         window.chooseRegion(region);
     });
 
+    jQuery(document).on('click', '.game-mode', function () {
+        var self = jQuery(this);
+
+        if (self.hasClass('active')) {
+            return false;
+        }
+
+        var gameMode = self.data('id');
+        jQuery('.game-mode').removeClass('active');
+
+        self.addClass('active');
+
+        window.changeGameMode(gameMode);
+    });
+
     window.onbeforeunload = function () {
-        return false;
+        if (!window.disconnected) {
+            return false;
+        }
     }
 </script>
 </html>

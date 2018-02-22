@@ -4,6 +4,7 @@ let FoodObject = require('./FoodObject.js');
 let BuffObject = require('./BuffObject.js');
 let MineObject = require('./MineObject.js');
 let GrenadeObject = require('./GrenadeObject.js');
+let FlagObject = require('./FlagObject.js');
 
 class GameService {
     constructor(engine, socket) {
@@ -13,6 +14,10 @@ class GameService {
         this.properties = {
             gameWidth: 12000,
             gameHeight: 12000,
+            server_width: 0,
+            server_height: 0,
+            base_width: 0,
+            base_height: 0,
             game_element: "game",
             in_game: false,
             started: false,
@@ -27,6 +32,21 @@ class GameService {
         this.engine = engine;
         this.socket = socket;
 
+        this.teams = {
+            red: {
+                score: 0
+            },
+            blue: {
+                score: 0
+            }
+        };
+
+        this.red_flag = null;
+        this.blue_flag = null;
+
+        this.red_base = null;
+        this.blue_base = null;
+
         this.leaderboard = null;
         this.shield_box = null;
         this.mine_box = null;
@@ -40,16 +60,30 @@ class GameService {
             speed_decrease: null,
         };
 
+        this.red_score = null;
+        this.blue_score = null;
+        this.match_time = null;
+
         this.can_drop = true;
         this.can_launch = true;
 
         this.leaderboard_interval = null;
         this.ping_interval = null;
+        this.score_interval = null;
 
         this.bounds = null;
         this.customBounds = null;
 
         this.map_group = null;
+
+        this.match = {
+            timer: null,
+            timer_event: null
+        };
+
+        this.skins = {
+            doge: 'doge'
+        };
     }
 
     onConnected() {
@@ -85,6 +119,24 @@ class GameService {
         player.map.drawCircle(0, 0, 5);
         player.map.endFill();
         player.map.anchor.setTo(0.5, 0.5);
+
+        if (window.gameMode === 'ctf') {
+            let widthPercent = this.properties.base_width / this.properties.server_width * 100;
+            let heightPercent = this.properties.base_height / this.properties.server_height * 100;
+
+            let width = 200 * (widthPercent / 100);
+            let height = 200 * (heightPercent / 100);
+
+            let redBase = this.engine.add.graphics(0, 0, this.map_group);
+            redBase.beginFill(0xbe0000);
+            redBase.drawRoundedRect(0, 0, width, height, 5);
+            redBase.alpha = 0.5;
+
+            let blueBase = this.engine.add.graphics(0, 0, this.map_group);
+            blueBase.beginFill(0x0000FF);
+            blueBase.drawRoundedRect(200 - width, 200 - height, width, height, 5);
+            blueBase.alpha = 0.5;
+        }
     }
 
     launchExplosion(x, y) {
@@ -125,7 +177,12 @@ class GameService {
     }
 
     createPlayer(data) {
-        console.log(data.x, data.y);
+
+        this.properties.server_width = data.width;
+        this.properties.server_height = data.height;
+        this.properties.base_width = data.base_width;
+        this.properties.base_height = data.base_height;
+
         player = this.engine.add.graphics(data.x, data.y);
         player.radius = data.size;
 
@@ -135,6 +192,15 @@ class GameService {
         player.drawCircle(0, 0, player.radius * 2);
         player.endFill();
         player.anchor.setTo(0.5, 0.5);
+
+        if (username) {
+            if (this.engine.cache.checkImageKey(username)) {
+                let skin = this.engine.add.sprite(0, 0, username, player);
+                skin.anchor.setTo(0.5, 0.5);
+
+                player.addChild(skin);
+            }
+        }
 
         let style = {
             font: "14px Arial",
@@ -350,6 +416,113 @@ class GameService {
 
         this.createMiniMap();
 
+        if (window.gameMode !== 'classic') {
+            //Create red score
+            this.red_score = this.engine.add.group();
+            this.red_score.fixedToCamera = true;
+            this.red_score.cameraOffset.setTo(((window.innerWidth * window.devicePixelRatio) / 2) - 125, 20);
+
+            let redScore = this.engine.add.graphics(0, 0, this.red_score);
+            redScore.beginFill(0xbe0000);
+            redScore.drawRoundedRect(0, 0, 70, 70, 5);
+            redScore.alpha = 0.5;
+
+            this.red_score.text = this.engine.add.text(0, 0, '0', {
+                font: "21px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.red_score);
+            this.red_score.text.setTextBounds(0, 0, 71, 71);
+            this.red_score.text.boundsAlignV = 'middle';
+            this.red_score.text.boundsAlignH = 'center';
+
+            //Create match timer
+            this.match_time = this.engine.add.group();
+            this.match_time.fixedToCamera = true;
+            this.match_time.cameraOffset.setTo(((window.innerWidth * window.devicePixelRatio) / 2) - 35, 20);
+
+            let matchTime = this.engine.add.graphics(0, 0, this.match_time);
+            matchTime.beginFill(0x000000);
+            matchTime.drawRoundedRect(0, 0, 70, 70, 5);
+            matchTime.alpha = 0.5;
+
+            this.match_time.text = this.engine.add.text(0, 0, '00:00', {
+                font: "21px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.match_time);
+            this.match_time.text.setTextBounds(0, 0, 71, 71);
+            this.match_time.text.boundsAlignV = 'middle';
+            this.match_time.text.boundsAlignH = 'center';
+
+            //Create blue score
+            this.blue_score = this.engine.add.group();
+            this.blue_score.fixedToCamera = true;
+            this.blue_score.cameraOffset.setTo(((window.innerWidth * window.devicePixelRatio) / 2) + 55, 20);
+
+            let blueScore = this.engine.add.graphics(0, 0, this.blue_score);
+            blueScore.beginFill(0x0000FF);
+            blueScore.drawRoundedRect(0, 0, 70, 70, 5);
+            blueScore.alpha = 0.5;
+
+            this.blue_score.text = this.engine.add.text(0, 0, '0', {
+                font: "21px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.blue_score);
+            this.blue_score.text.setTextBounds(0, 0, 71, 71);
+            this.blue_score.text.boundsAlignV = 'middle';
+            this.blue_score.text.boundsAlignH = 'center';
+
+            let currentTime = (new Date()).getTime();
+
+            let seconds = data.match.total_time - ((currentTime - data.match.start_time) / 1000);
+
+            // Create a custom timer
+            this.match.timer = this.engine.time.create();
+
+            // Create a delayed event 1m and 30s from now
+            this.match.timer_event = this.match.timer.add(Phaser.Timer.SECOND * seconds, () => {
+                this.match.timer.stop();
+            }, this.engine);
+
+            // Start the timer
+            this.match.timer.start();
+
+            if (window.gameMode === 'ctf') {
+                try {
+                    if (data.match.red_flag) {
+                        this.red_flag = new FlagObject(data.match.red_flag, this);
+
+                        if (data.match.red_flag.taken) {
+                            this.red_flag.hide();
+                        }
+                    }
+
+                    if (data.match.blue_flag) {
+                        this.blue_flag = new FlagObject(data.match.blue_flag, this);
+
+                        if (data.match.blue_flag.taken) {
+                            this.blue_flag.hide();
+                        }
+                    }
+
+                    this.red_base = this.engine.add.graphics(1000, 1000);
+                    this.red_base.beginFill(0xbe0000);
+                    this.red_base.drawRoundedRect(0, 0, data.base_width, data.base_height, 5);
+                    this.red_base.alpha = 0.5;
+
+                    this.blue_base = this.engine.add.graphics(1000, 1000);
+                    this.blue_base.beginFill(0x0000FF);
+                    this.blue_base.drawRoundedRect((this.properties.gameWidth - 3000) - data.base_width, (this.properties.gameHeight - 3000) - data.base_height, data.base_width, data.base_height, 5);
+                    this.blue_base.alpha = 0.5;
+
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+
         this.socket.emit('get-leaderboard');
         this.leaderboard_interval = setInterval(() => {
             this.socket.emit('get-leaderboard');
@@ -358,6 +531,12 @@ class GameService {
         this.ping_interval = setInterval(() => {
             this.socket.emit('ping');
         }, 10000);
+
+        if (window.gameMode !== 'classic') {
+            this.score_interval = setInterval(() => {
+                this.socket.emit('get-score');
+            }, 5000);
+        }
     }
 
     createLeaderboard(data) {
@@ -704,8 +883,8 @@ class GameService {
         player.rotation = PositionService.moveToPointer(player, speed, newPointer);
 
         if (this.map_group) {
-            player.map.x = (player.x / (10000 / 220)) - 20;
-            player.map.y = (player.y / (10000 / 220)) - 20;
+            player.map.x = (player.x / (this.properties.server_width / 220)) - 20;
+            player.map.y = (player.y / (this.properties.server_height / 220)) - 20;
         }
     }
 
@@ -920,6 +1099,13 @@ class GameService {
         this.enemies.splice(this.findPlayer(data.id, true), 1);
     }
 
+    onGetScore(data) {
+        if (window.gameMode !== 'classic') {
+            this.red_score.text.setText(data.red_score);
+            this.blue_score.text.setText(data.blue_score);
+        }
+    }
+
     onGetLeaderboard(data) {
         if (!this.properties.in_game) {
             return false;
@@ -943,6 +1129,10 @@ class GameService {
     }
 
     onChangeLeader(data) {
+        if (window.gameMode === 'ctf') {
+            return false;
+        }
+
         if (data.id === player.id) {
             if (!player.map) {
                 return false;
@@ -1008,6 +1198,70 @@ class GameService {
         this.buffs[data.type].visible = false;
     }
 
+    onFlagPickup(data) {
+        this[data.team + '_flag'].hide();
+
+        if (data.user_id === player.id) {
+            player.flag = this.engine.add.sprite(0, 0, 'taken_flag', player);
+            player.flag.anchor.setTo(0.5, 0.5);
+            player.addChild(player.flag);
+
+            player.map.destroy();
+            player.map = this.engine.add.graphics(0, 0, this.map_group);
+            player.map.beginFill(0x00FF00);
+            player.map.drawCircle(0, 0, 10);
+            player.map.endFill();
+            player.map.anchor.setTo(0.5, 0.5);
+        } else {
+            this.enemies.forEach(enemy => {
+                if (enemy.id === data.user_id) {
+                    enemy.addFlag(this);
+                }
+            });
+        }
+    }
+
+    onResetFlag(data) {
+        this[data.team + '_flag'].x = data.x;
+        this[data.team + '_flag'].x = data.x;
+        this[data.team + '_flag'].item.x = data.x;
+        this[data.team + '_flag'].item.y = data.y;
+        this[data.team + '_flag'].repositionMap(this);
+        this[data.team + '_flag'].show();
+
+        let team = 'red';
+        if (data.team === 'red') {
+            team = 'blue';
+        }
+
+        if (player.team !== team) {
+            if (player.flag) {
+                player.flag.destroy();
+                player.flag = null;
+
+                player.map.destroy();
+                player.map = this.engine.add.graphics(0, 0, this.map_group);
+                player.map.beginFill(0x00FF00);
+                player.map.drawCircle(0, 0, 5);
+                player.map.endFill();
+                player.map.anchor.setTo(0.5, 0.5);
+            }
+        }
+
+        this.enemies.forEach(enemy => {
+            if (enemy.team !== team) {
+                enemy.removeFlag(this);
+            }
+        });
+    }
+
+    onDropFlag(data) {
+        this[data.team + '_flag'].item.x = data.x;
+        this[data.team + '_flag'].item.y = data.y;
+        this[data.team + '_flag'].repositionMap(this);
+        this[data.team + '_flag'].show();
+    }
+
     onKilled(data) {
         if (player) {
             player.text.destroy();
@@ -1042,6 +1296,56 @@ class GameService {
                 ga('set', 'page', '/died');
                 ga('send', 'pageview');
             }, 1000);
+        }
+    }
+
+    onMatchEnded(data) {
+        if (player && this.properties.in_game) {
+            player.text.destroy();
+            player.map.destroy();
+            player.destroy();
+
+            jQuery('#red-won').hide();
+            jQuery('#blue-won').hide();
+            jQuery('#both-won').hide();
+
+            if (data.red_score > data.blue_score) {
+                jQuery('#red-won').show();
+            } else if (data.red_score < data.blue_score) {
+                jQuery('#blue-won').show();
+            } else {
+                jQuery('#both-won').show();
+            }
+
+            jQuery('#red-score').html(data.red_score);
+            jQuery('#blue-score').html(data.blue_score);
+
+            if (data.best_player.score) {
+                jQuery('#match-ended').find('.username').text(data.best_player.username);
+                jQuery('#match-ended').find('.score').text(data.best_player.score);
+                jQuery('#match-ended').find('.best-player').show();
+            } else {
+                jQuery('#match-ended').find('.best-player').hide();
+            }
+
+            this.restart();
+
+            this.engine.state.start('BlankStage', true);
+
+            jQuery('#play-button').show();
+            jQuery('#loading-button').hide();
+
+            jQuery('#game').fadeOut();
+            jQuery('#home').fadeIn();
+            jQuery('#login').hide();
+            jQuery('#match-ended').fadeIn();
+
+            window.aiptag.cmd.display.push(function () {
+                aipDisplayTag.refresh('xplo-io_300x250');
+            });
+
+            ga('set', 'page', '/died');
+            ga('send', 'pageview');
         }
     }
 
@@ -1092,11 +1396,47 @@ class GameService {
             }
         }
 
+        if (window.gameMode !== 'classic') {
+            this.red_score.destroy();
+            this.blue_score.destroy();
+            this.match_time.destroy();
+
+            this.match.timer = null;
+            this.match.timer_event = null;
+
+            if (this.red_base) {
+                this.red_base.destroy();
+            }
+
+            if (this.blue_base) {
+                this.blue_base.destroy();
+            }
+
+            if (this.red_flag) {
+                if (this.red_flag.item) {
+                    this.red_flag.item.destroy();
+                    this.red_flag.map.destroy();
+                }
+
+                this.red_flag = null;
+            }
+
+            if (this.blue_flag) {
+                if (this.blue_flag.item) {
+                    this.blue_flag.item.destroy();
+                    this.blue_flag.map.destroy();
+                }
+
+                this.blue_flag = null;
+            }
+        }
+
         this.can_drop = true;
         this.can_launch = true;
 
         clearInterval(this.leaderboard_interval);
         clearInterval(this.ping_interval);
+        clearInterval(this.score_interval);
     }
 }
 

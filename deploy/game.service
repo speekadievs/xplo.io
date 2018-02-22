@@ -7,9 +7,10 @@ After=network.target
 Environment=PORT=80
 Environment=REDIS_HOST=db.xplo.io
 Environment=REDIS_PORT=6379
+Environment=LIVE=true
 Type=simple
 User=root
-ExecStart=/usr/bin/node --expose-gc /var/www/html/app.js
+ExecStart=node --nouse-idle-notification --expose-gc /var/www/html/app.js
 Restart=on-failure
 
 [Install]

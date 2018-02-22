@@ -12,7 +12,11 @@ window.disconnected = false;
 window.switchingRegion = false;
 window.playClicked = false;
 window.playCount = 0;
+window.gameMode = 'classic';
 
+const customParser = require('socket.io-msgpack-parser');
+
+let UtilService = require('../UtilService.js');
 let GameService = require('./GameService.js');
 
 window.chooseRegion = function (region) {
@@ -21,17 +25,27 @@ window.chooseRegion = function (region) {
 
     let socket;
 
-    if (region === 'auto') {
-        socket = io({
+    if (window.location.href.indexOf('xplo.io') !== -1) {
+        socket = io('http://' + region + '.xplo.io', {
             transports: ['websocket'],
+            parser: customParser,
             upgrade: false
         });
     } else {
-        socket = io('http://' + region + '.xplo.io', {
+        socket = io({
             transports: ['websocket'],
+            parser: customParser,
             upgrade: false
         });
     }
+
+    window.changeGameMode = function (mode) {
+        socket.emit('change-game-mode', {
+            mode: mode
+        });
+
+        window.gameMode = mode;
+    };
 
     socket.on("connected", function () {
         if (disconnected) {
@@ -82,6 +96,14 @@ window.chooseRegion = function (region) {
                 engine.load.image('speed_increase', '/images/speed_increase.png');
                 engine.load.image('speed_decrease', '/images/speed_decrease.png');
 
+                engine.load.image('flag', '/images/flag.png');
+                engine.load.image('red_flag', '/images/red_flag.png');
+                engine.load.image('blue_flag', '/images/blue_flag.png');
+                engine.load.image('red_star', '/images/red_star.png');
+                engine.load.image('blue_star', '/images/blue_star.png');
+                engine.load.image('taken_flag', '/images/taken_flag.png');
+
+                engine.load.image('doge', '/images/doge.png');
 
                 engine.load.spritesheet('explosion', '/images/explosion.png', 128, 128);
                 //engine.load.image('doge', '/images/doge.jpg');
@@ -205,6 +227,26 @@ window.chooseRegion = function (region) {
                         game.onHideBuff(data);
                     });
 
+                    socket.on('match-ended', function (data) {
+                        game.onMatchEnded(data);
+                    });
+
+                    socket.on('get-score', function (data) {
+                        game.onGetScore(data);
+                    });
+
+                    socket.on('flag-pickup', function (data) {
+                        game.onFlagPickup(data);
+                    });
+
+                    socket.on('reset-flag', function (data) {
+                        game.onResetFlag(data);
+                    });
+
+                    socket.on('drop-flag', function (data) {
+                        game.onDropFlag(data);
+                    });
+
                     socket.on('disconnect', function () {
                         if (window.switchingRegion) {
                             jQuery('#home').fadeIn();
@@ -218,6 +260,8 @@ window.chooseRegion = function (region) {
                             jQuery('#game').fadeOut();
                             jQuery('#home').fadeIn();
                             jQuery('#login').hide();
+                            jQuery('#match-ended').hide();
+                            jQuery('#dead').hide();
                             jQuery('#disconnected').fadeIn();
 
                             window.aiptag.cmd.display.push(function () {
@@ -258,21 +302,23 @@ window.chooseRegion = function (region) {
                     this.wKey = game.engine.input.keyboard.addKey(Phaser.Keyboard.W);
                     if (this.wKey.isDown) {
                         if (game.can_drop) {
-                            if (player.mines.length) {
-                                let mine = player.mines[0];
+                            if (!player.flag) {
+                                if (player.mines.length) {
+                                    let mine = player.mines[0];
 
-                                socket.emit('drop-mine', {
-                                    id: mine.id,
-                                    pointer_x: pointer.x,
-                                    pointer_y: pointer.y,
-                                    pointer_worldx: pointer.worldX,
-                                    pointer_worldy: pointer.worldY,
-                                });
+                                    socket.emit('drop-mine', {
+                                        id: mine.id,
+                                        pointer_x: pointer.x,
+                                        pointer_y: pointer.y,
+                                        pointer_worldx: pointer.worldX,
+                                        pointer_worldy: pointer.worldY,
+                                    });
 
-                                player.mines.splice(0, 1);
-                                game.mine_box.text.setText(player.mines.length);
+                                    player.mines.splice(0, 1);
+                                    game.mine_box.text.setText(player.mines.length);
+                                }
+                                game.can_drop = false;
                             }
-                            game.can_drop = false;
                         }
                     } else {
                         game.can_drop = true;
@@ -281,22 +327,24 @@ window.chooseRegion = function (region) {
                     this.spaceKey = game.engine.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
                     if (this.spaceKey.isDown) {
                         if (game.can_launch) {
-                            if (player.grenades.length) {
-                                let grenade = player.grenades[0];
+                            if (!player.flag) {
+                                if (player.grenades.length) {
+                                    let grenade = player.grenades[0];
 
-                                socket.emit('throw-grenade', {
-                                    id: grenade.id,
-                                    pointer_x: pointer.x,
-                                    pointer_y: pointer.y,
-                                    pointer_worldx: pointer.worldX,
-                                    pointer_worldy: pointer.worldY,
-                                });
+                                    socket.emit('throw-grenade', {
+                                        id: grenade.id,
+                                        pointer_x: pointer.x,
+                                        pointer_y: pointer.y,
+                                        pointer_worldx: pointer.worldX,
+                                        pointer_worldy: pointer.worldY,
+                                    });
 
-                                player.grenades.splice(0, 1);
-                                game.grenade_box.text.setText(player.grenades.length);
+                                    player.grenades.splice(0, 1);
+                                    game.grenade_box.text.setText(player.grenades.length);
+                                }
+
+                                game.can_launch = false;
                             }
-
-                            game.can_launch = false;
                         }
                     } else {
                         game.can_launch = true;
@@ -320,6 +368,17 @@ window.chooseRegion = function (region) {
 
                     if (game.map_group) {
                         engine.world.bringToTop(game.map_group);
+                    }
+                }
+            },
+            render: function () {
+                if (window.gameMode !== 'classic') {
+                    if (game.match_time && game.match.timer) {
+                        if (game.match.timer.running) {
+                            game.match_time.text.setText(UtilService.formatTime(Math.round((game.match.timer_event.delay - game.match.timer.ms) / 1000)));
+                        } else {
+                            game.match_time.text.setText('00:00');
+                        }
                     }
                 }
             },
@@ -388,9 +447,10 @@ window.chooseRegion = function (region) {
             ga('send', 'pageview');
         });
 
-        jQuery(document).on('click', '#play-again-button', function () {
+        jQuery(document).on('click', '.play-again-button', function () {
             jQuery('#home').fadeIn();
             jQuery('#dead').hide();
+            jQuery('#match-ended').hide();
             jQuery('#login').fadeIn();
 
             window.aiptag.cmd.display.push(function () {

@@ -32,6 +32,15 @@ class RemotePlayer {
             this.god_mode = game.engine.add.tween(this.player).to({alpha: 1}, 500, Phaser.Easing.Linear.None, true, 0, 1000, true);
         }
 
+        if (username) {
+            if (game.engine.cache.checkImageKey(username)) {
+                let skin = game.engine.add.sprite(0, 0, username, this.player);
+                skin.anchor.setTo(0.5, 0.5);
+
+                this.player.addChild(skin);
+            }
+        }
+
         // draw a shape
         game.engine.physics.p2.enableBody(this.player);
         this.player.body.clearShapes();
@@ -40,13 +49,26 @@ class RemotePlayer {
 
         // add player to map
 
+        let fill = '0xFF0000';
+        if (window.gameMode !== 'classic') {
+            if (player.team === 'red') {
+                fill = '0xbe0000';
+            } else {
+                fill = '0x0000FF';
+            }
+        }
+
+        this.fill = fill;
+
         if (game.map_group) {
-            this.map = game.engine.add.graphics(0, 0, game.map_group);
-            this.map.beginFill(0xFF0000);
+            this.map = game.engine.add.graphics(((this.x / (game.properties.server_width / 220)) - 20), ((this.y / (game.properties.server_height / 220)) - 20), game.map_group);
+            this.map.beginFill(this.fill);
             this.map.drawCircle(0, 0, 5);
             this.map.endFill();
             this.map.anchor.setTo(0.5, 0.5);
         }
+
+        this.flag = null;
 
         let style = {
             font: "14px Arial",
@@ -80,8 +102,24 @@ class RemotePlayer {
 
         if (game.map_group) {
             this.map = game.engine.add.graphics(0, 0, game.map_group);
-            this.map.beginFill(0xFF0000);
+            this.map.beginFill(this.fill);
             this.map.drawCircle(0, 0, 5);
+            this.map.endFill();
+            this.map.anchor.setTo(0.5, 0.5);
+        }
+    }
+
+    flagPickedUp(game) {
+        if (!this.map) {
+            return false;
+        }
+
+        this.map.destroy();
+
+        if (game.map_group) {
+            this.map = game.engine.add.graphics(0, 0, game.map_group);
+            this.map.beginFill(this.fill);
+            this.map.drawCircle(0, 0, 10);
             this.map.endFill();
             this.map.anchor.setTo(0.5, 0.5);
         }
@@ -100,6 +138,23 @@ class RemotePlayer {
             this.map.drawCircle(0, 0, 10);
             this.map.endFill();
             this.map.anchor.setTo(0.5, 0.5);
+        }
+    }
+
+    addFlag(game) {
+        this.flag = game.engine.add.sprite(0, 0, 'taken_flag', this.player);
+        this.flag.anchor.setTo(0.5, 0.5);
+        this.player.addChild(this.player.flag);
+
+        this.flagPickedUp(game);
+    }
+
+    removeFlag(game) {
+        if (this.flag) {
+            this.flag.destroy();
+            this.flag = null;
+
+            this.resetMap(game);
         }
     }
 }
