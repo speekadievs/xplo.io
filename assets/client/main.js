@@ -1,5 +1,12 @@
+let skins = ["abkhazia", "afghanistan", "albania", "algeria", "andorra", "angola", "anguilla", "argentina", "armenia", "aruba", "australia", "austria", "azerbaijan", "bahamas", "bahrain", "bangladesh", "barbados", "belarus", "belgium", "belize", "benin", "bermuda", "bhutan-1", "bhutan", "bolivia", "bonaire", "botswana", "brazil", "british-columbia", "british-virgin-islands", "brunei", "bulgaria", "burkina-faso", "burundi", "cambodia", "cameroon", "canada", "canary-islands", "cape-verde", "cayman-islands", "central-african-republic", "chile", "china", "cocos-island", "colombia", "comoros", "cook-islands", "costa-rica", "croatia", "cuba", "curacao", "cyprus", "czech-republic", "denmark", "doge", "dominica", "dominican-republic", "ecuador", "egypt", "england", "estonia", "ethiopia", "european-union", "fiji", "finland", "france", "gabon", "gambia", "georgia", "germany", "ghana", "greece", "greenland", "grenada", "guam", "guatemala", "guernsey", "guinea", "guyana", "haiti", "hawaii", "honduras", "hong-kong", "hungary", "iceland", "india", "indonesia", "iran", "iraq", "ireland", "israel", "italy", "jamaica", "japan", "jersey", "jordan", "kazakhstan", "kenya", "kiribati", "kosovo", "kuwait", "kyrgyzstan", "laos", "latvia", "lebanon", "lesotho", "liberia", "libya", "liechtenstein", "lithuania", "luxembourg", "madagascar", "malaysia", "maldives", "mali", "malta", "martinique", "mauritania", "mauritius", "melilla", "mexico", "micronesia", "moldova", "monaco", "mongolia", "montenegro", "montserrat", "morocco", "mozambique", "myanmar", "namibia", "nato", "nauru", "nepal", "netherlands", "new-zealand", "nicaragua", "niger", "nigeria", "north-korea", "northen-cyprus", "norway", "oman", "ossetia", "pakistan", "palau", "palestine", "panama", "paraguay", "pepe", "peru", "philippines", "pitcairn-islands", "portugal", "puerto-rico", "qatar", "republic-of-macedonia", "republic-of-poland", "republic-of-the-congo", "romania", "russia", "rwanda", "saba-island", "salvador", "samoa", "san-marino", "sardinia", "saudi-arabia", "scotland", "senegal", "serbia", "seychelles", "singapore", "slovakia", "slovenia", "somalia", "somaliland", "south-africa", "south-korea", "south-sudan", "spain", "sudan", "suriname", "swaziland", "sweden", "switzerland", "syria", "taiwan", "tajikistan", "tanzania", "thailand", "tibet", "togo", "tokelau", "tonga", "transnistria", "tunisia", "turkey", "turkmenistan", "tuvalu", "uganda", "ukraine", "united-arab-emirates", "united-kingdom", "united-nations", "united-states-of-america", "uruguay", "uzbekistn", "vanuatu", "vatican-city", "venezuela", "vietnam", "virgin-islands", "wales", "yemen", "zambia", "zimbabwe"];
+
 window.jQuery = require('jquery');
 window.moment = require('moment');
+
+let skinModal = jQuery('#skins');
+skins.forEach(skin => {
+    skinModal.find('.modal-body').append('<div class="skin-container"><a href="#" data-id="' + skin + '" class="skin"><img src="/images/skins/' + skin + '.png"</a></div>');
+});
 
 // Do some front-end stuff
 
@@ -8,6 +15,7 @@ jQuery('#home').fadeIn();
 
 window.player = null;
 window.username = '';
+window.skin = '';
 window.disconnected = false;
 window.switchingRegion = false;
 window.playClicked = false;
@@ -103,7 +111,9 @@ window.chooseRegion = function (region) {
                 engine.load.image('blue_star', '/images/blue_star.png');
                 engine.load.image('taken_flag', '/images/taken_flag.png');
 
-                engine.load.image('doge', '/images/doge.png');
+                skins.forEach(skin => {
+                    engine.load.image(skin, '/images/skins/' + skin + '.png');
+                });
 
                 engine.load.spritesheet('explosion', '/images/explosion.png', 128, 128);
                 //engine.load.image('doge', '/images/doge.jpg');

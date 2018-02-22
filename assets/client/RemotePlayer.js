@@ -1,5 +1,5 @@
 class RemotePlayer {
-    constructor(id, username, startx, starty, startSize, start_angle, color, shield, is_god, game, socket) {
+    constructor(id, username, skin, team, startx, starty, startSize, start_angle, color, shield, is_god, game, socket) {
         this.x = startx;
         this.y = starty;
 
@@ -20,6 +20,7 @@ class RemotePlayer {
         this.player.anchor.setTo(0.5, 0.5);
 
         //we set the initial size;
+        this.team = team;
         this.initial_size = startSize;
         this.player.body_size = this.player.radius;
         this.player.type = "player_body";
@@ -32,12 +33,14 @@ class RemotePlayer {
             this.god_mode = game.engine.add.tween(this.player).to({alpha: 1}, 500, Phaser.Easing.Linear.None, true, 0, 1000, true);
         }
 
-        if (username) {
-            if (game.engine.cache.checkImageKey(username)) {
-                let skin = game.engine.add.sprite(0, 0, username, this.player);
-                skin.anchor.setTo(0.5, 0.5);
+        if (window.gameMode === 'classic') {
+            if (skin) {
+                if (game.engine.cache.checkImageKey(skin)) {
+                    let skin = game.engine.add.sprite(0, 0, skin, this.player);
+                    skin.anchor.setTo(0.5, 0.5);
 
-                this.player.addChild(skin);
+                    this.player.addChild(skin);
+                }
             }
         }
 
@@ -51,7 +54,7 @@ class RemotePlayer {
 
         let fill = '0xFF0000';
         if (window.gameMode !== 'classic') {
-            if (player.team === 'red') {
+            if (this.team === 'red') {
                 fill = '0xbe0000';
             } else {
                 fill = '0x0000FF';
@@ -94,11 +97,9 @@ class RemotePlayer {
     }
 
     resetMap(game) {
-        if (!this.map) {
-            return false;
+        if (this.map) {
+            this.map.destroy();
         }
-
-        this.map.destroy();
 
         if (game.map_group) {
             this.map = game.engine.add.graphics(0, 0, game.map_group);
@@ -110,11 +111,9 @@ class RemotePlayer {
     }
 
     flagPickedUp(game) {
-        if (!this.map) {
-            return false;
+        if (this.map) {
+            this.map.destroy();
         }
-
-        this.map.destroy();
 
         if (game.map_group) {
             this.map = game.engine.add.graphics(0, 0, game.map_group);
@@ -144,7 +143,7 @@ class RemotePlayer {
     addFlag(game) {
         this.flag = game.engine.add.sprite(0, 0, 'taken_flag', this.player);
         this.flag.anchor.setTo(0.5, 0.5);
-        this.player.addChild(this.player.flag);
+        this.player.addChild(this.flag);
 
         this.flagPickedUp(game);
     }

@@ -1,7 +1,7 @@
 let cluster = require('cluster');
 
 if (cluster.isMaster) {
-    let numWorkers = require('os').cpus().length;
+    let numWorkers = 1; //require('os').cpus().length;
 
     console.log('Master cluster setting up ' + numWorkers + ' workers...');
 
@@ -545,6 +545,10 @@ if (cluster.isMaster) {
                     }
                 }
 
+                if (game.mode !== 'classic') {
+                    game.teams[player.team].players.splice(this.id, 1);
+                }
+
                 game.recalculateHighscore(player);
 
                 game.removable_bodies.push(playerBody);
@@ -653,6 +657,10 @@ if (cluster.isMaster) {
                             }
                         }
 
+                        if (game.mode !== 'classic') {
+                            game.teams[player.team].players.splice(this.id, 1);
+                        }
+
                         if (player.body) {
                             game.removable_bodies.push(player.body);
                         }
@@ -722,6 +730,11 @@ if (cluster.isMaster) {
                 games['team_dm'].teams.blue.score = 0;
 
                 games['team_dm'].match.start_time = (new Date()).getTime();
+
+                games['team_dm'].mine_list.forEach(mine => {
+                    games['team_dm'].removable_bodies.push(mine.body);
+                });
+                games['team_dm'].mine_list = [];
             }
         }
 
@@ -758,6 +771,11 @@ if (cluster.isMaster) {
                 games['ctf'].teams.blue.flag = new FlagObject(games['ctf'].properties.width, games['ctf'].properties.height, 'blue', unique.v4(), games['ctf']);
 
                 games['ctf'].match.start_time = (new Date()).getTime();
+
+                games['ctf'].mine_list.forEach(mine => {
+                    games['ctf'].removable_bodies.push(mine.body);
+                });
+                games['ctf'].mine_list = [];
             }
         }
     }, 10000);
@@ -885,6 +903,8 @@ if (cluster.isMaster) {
                 game.log("Created new player with id " + this.id);
             }
 
+            newPlayer.skin = data.skin;
+
             newPlayer.id = this.id;
 
             setTimeout(() => {
@@ -901,6 +921,8 @@ if (cluster.isMaster) {
             this.emit('create-player', {
                 id: newPlayer.id,
                 username: newPlayer.username,
+                skin: newPlayer.skin,
+                team: newPlayer.team,
                 x: newPlayer.x,
                 y: newPlayer.y,
                 size: newPlayer.size,
@@ -925,6 +947,8 @@ if (cluster.isMaster) {
             //information to be sent to all clients except sender
             let currentPlayerInfo = {
                 username: newPlayer.username,
+                skin: newPlayer.skin,
+                team: newPlayer.team,
                 id: newPlayer.id,
                 x: newPlayer.x,
                 y: newPlayer.y,
@@ -941,6 +965,8 @@ if (cluster.isMaster) {
 
                 let existingPlayerInfo = {
                     username: existingPlayer.username,
+                    skin: existingPlayer.skin,
+                    team: existingPlayer.team,
                     id: existingPlayer.id,
                     x: existingPlayer.x,
                     y: existingPlayer.y,
@@ -1073,8 +1099,6 @@ if (cluster.isMaster) {
             movePlayer.x = movePlayer.body.position[0];
             movePlayer.y = movePlayer.body.position[1];
 
-            movePlayer.last_move = (new Date()).getTime();
-
             //new player position to be sent back to client.
             let info = {
                 x: movePlayer.body.position[0],
@@ -1097,6 +1121,8 @@ if (cluster.isMaster) {
 
             //send to everyone except sender
             this.to(game.mode).broadcast.emit('enemy-move', moveplayerData);
+
+            movePlayer.last_move = (new Date()).getTime();
         });
 
         socket.on('drop-mine', function (data) {

@@ -97,7 +97,8 @@ class GameService {
 
         // send the server our initial position and tell it we are connected
         this.socket.emit('new-player', {
-            username: username ? username : ''
+            username: username ? username : '',
+            skin: skin ? skin : ''
         });
     }
 
@@ -193,12 +194,14 @@ class GameService {
         player.endFill();
         player.anchor.setTo(0.5, 0.5);
 
-        if (username) {
-            if (this.engine.cache.checkImageKey(username)) {
-                let skin = this.engine.add.sprite(0, 0, username, player);
-                skin.anchor.setTo(0.5, 0.5);
+        if (window.gameMode === 'classic') {
+            if (window.skin) {
+                if (this.engine.cache.checkImageKey(window.skin)) {
+                    let skin = this.engine.add.sprite(0, 0, window.skin, player);
+                    skin.anchor.setTo(0.5, 0.5);
 
-                player.addChild(skin);
+                    player.addChild(skin);
+                }
             }
         }
 
@@ -235,6 +238,7 @@ class GameService {
         player.initial_shield = data.shield;
         player.initial_color = data.color;
         player.max_shield = data.max_shield;
+        player.team = data.team;
         player.mines = [];
         player.grenades = [];
 
@@ -743,9 +747,13 @@ class GameService {
     }
 
     newEnemy(data) {
-        let newEnemy = new RemotePlayer(data.id, data.username, data.x, data.y, data.size, data.angle, data.color, data.shield, data.is_god, this, this.socket);
+        try {
+            let newEnemy = new RemotePlayer(data.id, data.username, data.skin, data.team, data.x, data.y, data.size, data.angle, data.color, data.shield, data.is_god, this, this.socket);
 
-        this.enemies.push(newEnemy);
+            this.enemies.push(newEnemy);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     findPlayer(id, returnKey) {
@@ -1199,6 +1207,7 @@ class GameService {
     }
 
     onFlagPickup(data) {
+        console.log('flag picked');
         this[data.team + '_flag'].hide();
 
         if (data.user_id === player.id) {
@@ -1212,13 +1221,13 @@ class GameService {
             player.map.drawCircle(0, 0, 10);
             player.map.endFill();
             player.map.anchor.setTo(0.5, 0.5);
-        } else {
-            this.enemies.forEach(enemy => {
-                if (enemy.id === data.user_id) {
-                    enemy.addFlag(this);
-                }
-            });
         }
+
+        this.enemies.forEach(enemy => {
+            if (enemy.id === data.user_id) {
+                enemy.addFlag(this);
+            }
+        });
     }
 
     onResetFlag(data) {
@@ -1226,6 +1235,8 @@ class GameService {
         this[data.team + '_flag'].x = data.x;
         this[data.team + '_flag'].item.x = data.x;
         this[data.team + '_flag'].item.y = data.y;
+        this[data.team + '_flag'].item.body.x = data.x;
+        this[data.team + '_flag'].item.body.y = data.y;
         this[data.team + '_flag'].repositionMap(this);
         this[data.team + '_flag'].show();
 
@@ -1234,7 +1245,7 @@ class GameService {
             team = 'blue';
         }
 
-        if (player.team !== team) {
+        if (player.team === team) {
             if (player.flag) {
                 player.flag.destroy();
                 player.flag = null;
@@ -1249,15 +1260,19 @@ class GameService {
         }
 
         this.enemies.forEach(enemy => {
-            if (enemy.team !== team) {
+            if (enemy.team === team) {
                 enemy.removeFlag(this);
             }
         });
     }
 
     onDropFlag(data) {
+        this[data.team + '_flag'].x = data.x;
+        this[data.team + '_flag'].x = data.x;
         this[data.team + '_flag'].item.x = data.x;
         this[data.team + '_flag'].item.y = data.y;
+        this[data.team + '_flag'].item.body.x = data.x;
+        this[data.team + '_flag'].item.body.y = data.y;
         this[data.team + '_flag'].repositionMap(this);
         this[data.team + '_flag'].show();
     }
@@ -1300,6 +1315,7 @@ class GameService {
     }
 
     onMatchEnded(data) {
+        console.log(data);
         if (player && this.properties.in_game) {
             player.text.destroy();
             player.map.destroy();

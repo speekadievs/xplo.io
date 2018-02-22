@@ -65,3 +65,12 @@ body {
     width:200px;
     z-index: 1;
 }
+
+.skin-container {
+    display:inline-block;
+    margin:5px;
+}
+
+.active-skin {
+    border: 3px solid #00a500;
+}
