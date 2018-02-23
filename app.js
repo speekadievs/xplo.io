@@ -1,7 +1,8 @@
 let cluster = require('cluster');
 
 if (cluster.isMaster) {
-    let numWorkers = require('os').cpus().length;
+    //currently set to 1, will increase when needed
+    let numWorkers = 1; //require('os').cpus().length;
 
     console.log('Master cluster setting up ' + numWorkers + ' workers...');
 
@@ -40,7 +41,7 @@ if (cluster.isMaster) {
         client = false;
     });
 
-//require p2 physics library in the server.
+    //require p2 physics library in the server.
     let p2 = require('./assets/server/p2/p2.js');
 
     let app = express();
@@ -100,6 +101,13 @@ if (cluster.isMaster) {
                 };
 
                 let transporter = nodemailer.createTransport(mg(auth));
+
+                if (client) {
+                    client.lpush('feedback', {
+                        type: type,
+                        text: content
+                    })
+                }
 
                 let mailOptions = {
                     from: 'ar4ix8@gmail.com',
@@ -799,8 +807,32 @@ if (cluster.isMaster) {
 
         socket.emit('connected');
 
+        if (client) {
+            client.get('total_players', (value) => {
+                if (!value) {
+                    value = 0;
+                }
+
+                value++;
+
+                client.set('total_players', value);
+            });
+
+            client.get('classic_players', (value) => {
+                if (!value) {
+                    value = 0;
+                }
+
+                value++;
+
+                client.set('classic_players', value);
+            });
+        }
+
         socket.on('change-game-mode', function (data) {
             if (data.mode === 'classic' || data.mode === 'team_dm' || data.mode === 'ctf') {
+                let previousRoom = socket.current_room;
+
                 socket.leave('classic');
                 socket.leave('team_dm');
                 socket.leave('ctf');
@@ -809,6 +841,28 @@ if (cluster.isMaster) {
                 socket.current_room = data.mode;
 
                 game = games[data.mode];
+
+                if (client) {
+                    client.get(previousRoom + '_players', (value) => {
+                        if (!value) {
+                            value = 0;
+                        } else {
+                            value--;
+                        }
+
+                        client.set(previousRoom + '_players', value);
+                    });
+
+                    client.get(data.mode + '_players', (value) => {
+                        if (!value) {
+                            value = 0;
+                        }
+
+                        value++;
+
+                        client.set(data.mode + '_players', value);
+                    });
+                }
             }
         });
 
@@ -849,6 +903,28 @@ if (cluster.isMaster) {
             if (game.leader.id === this.id) {
                 game.leader.id = false;
                 game.leader.score = 0;
+            }
+
+            if (client) {
+                client.get('total_players', (value) => {
+                    if (!value) {
+                        value = 0;
+                    } else {
+                        value--;
+                    }
+
+                    client.set('total_players', value);
+                });
+
+                client.get(game.mode + '_players', (value) => {
+                    if (!value) {
+                        value = 0;
+                    } else {
+                        value--;
+                    }
+
+                    client.set(game.mode + '_players', value);
+                });
             }
         });
 
