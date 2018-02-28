@@ -23,8 +23,13 @@ class PositionService {
 
     }
 
-    static moveToPointerPos(pos, speed, pointer) {
+    static moveToPointerPos(displayObject, speed, pointer) {
+        let angle = PositionService.angleToPointerPos(displayObject, pointer);
 
+        displayObject.body.velocity.x = Math.cos(angle) * speed;
+        displayObject.body.velocity.y = Math.sin(angle) * speed;
+
+        return angle;
     }
 
     /**
@@ -65,6 +70,16 @@ class PositionService {
 
         return Math.atan2(pointer.worldY - displayObject.y, pointer.worldX - displayObject.x);
 
+    }
+
+    /**
+     *
+     * @param displayObject
+     * @param pointer
+     * @returns {number}
+     */
+    static angleToPointerPos(displayObject, pointer) {
+        return Math.atan2(pointer.y - displayObject.y, pointer.x - displayObject.x);
     }
 }
 

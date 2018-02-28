@@ -827,8 +827,15 @@ class GameService {
         //     player.player.body.y = data.y;
         // }
 
-        player.player.body.x = data.x;
-        player.player.body.y = data.y;
+        if (player.debugPlayer) {
+            player.debugPlayer.x = data.x;
+            player.debugPlayer.y = data.y;
+        }
+
+        player.rotation = PositionService.moveToPointerPos(player.player, player.speed * 2, {
+            x: data.x,
+            y: data.y
+        });
 
         // Get the timestamp and player telemetry from the server
         let serverTS = data.ts;
@@ -867,6 +874,10 @@ class GameService {
         let percent = ((data.new_shield - 10) * 100) / (player.max_shield - 10);
 
         this.shield_box.text.setText(Math.round(percent) + '%');
+
+        if (player.debugPlayer) {
+            player.debugPlayer.graphicsData[0].lineWidth = data.new_shield;
+        }
     }
 
     onExplosion(data) {

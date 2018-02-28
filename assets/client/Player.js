@@ -70,6 +70,24 @@ class Player {
         this.player.body.clearShapes();
         this.player.body.addCircle((this.body_size + (this.shield / 2)), 0, 0);
         this.player.body.data.shapes[0].sensor = true;
+
+        // this.player.body.onBeginContact.add((body, bodyB, shapeA, shapeB, equation) => {
+        //     let key = body.sprite.id;
+        //     let type = body.sprite.type;
+        //
+        //     if (type !== 'player_body') {
+        //         body.sprite.visible = false;
+        //     }
+        // }, this);
+
+        this.debugPlayer = game.engine.add.graphics(data.x, data.y);
+
+        // set a fill and line style
+        this.debugPlayer.beginFill(0xff0000);
+        this.debugPlayer.lineStyle(data.shield, data.color, 0.5);
+        this.debugPlayer.drawCircle(0, 0, this.radius * 2);
+        this.debugPlayer.endFill();
+        this.debugPlayer.anchor.setTo(0.5, 0.5);
     }
 
     updateTextPos() {

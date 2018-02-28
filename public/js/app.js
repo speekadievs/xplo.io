@@ -16309,7 +16309,14 @@ var PositionService = function () {
         }
     }, {
         key: "moveToPointerPos",
-        value: function moveToPointerPos(pos, speed, pointer) {}
+        value: function moveToPointerPos(displayObject, speed, pointer) {
+            var angle = PositionService.angleToPointerPos(displayObject, pointer);
+
+            displayObject.body.velocity.x = Math.cos(angle) * speed;
+            displayObject.body.velocity.y = Math.sin(angle) * speed;
+
+            return angle;
+        }
 
         /**
          * @param displayObject
@@ -16352,6 +16359,19 @@ var PositionService = function () {
             }
 
             return Math.atan2(pointer.worldY - displayObject.y, pointer.worldX - displayObject.x);
+        }
+
+        /**
+         *
+         * @param displayObject
+         * @param pointer
+         * @returns {number}
+         */
+
+    }, {
+        key: "angleToPointerPos",
+        value: function angleToPointerPos(displayObject, pointer) {
+            return Math.atan2(pointer.y - displayObject.y, pointer.x - displayObject.x);
         }
     }]);
 
@@ -29265,8 +29285,15 @@ var GameService = function () {
             //     player.player.body.y = data.y;
             // }
 
-            player.player.body.x = data.x;
-            player.player.body.y = data.y;
+            if (player.debugPlayer) {
+                player.debugPlayer.x = data.x;
+                player.debugPlayer.y = data.y;
+            }
+
+            player.rotation = PositionService.moveToPointerPos(player.player, player.speed * 2, {
+                x: data.x,
+                y: data.y
+            });
 
             // Get the timestamp and player telemetry from the server
             var serverTS = data.ts;
@@ -29306,6 +29333,10 @@ var GameService = function () {
             var percent = (data.new_shield - 10) * 100 / (player.max_shield - 10);
 
             this.shield_box.text.setText(Math.round(percent) + '%');
+
+            if (player.debugPlayer) {
+                player.debugPlayer.graphicsData[0].lineWidth = data.new_shield;
+            }
         }
     }, {
         key: 'onExplosion',
@@ -29946,6 +29977,24 @@ var Player = function () {
         this.player.body.clearShapes();
         this.player.body.addCircle(this.body_size + this.shield / 2, 0, 0);
         this.player.body.data.shapes[0].sensor = true;
+
+        // this.player.body.onBeginContact.add((body, bodyB, shapeA, shapeB, equation) => {
+        //     let key = body.sprite.id;
+        //     let type = body.sprite.type;
+        //
+        //     if (type !== 'player_body') {
+        //         body.sprite.visible = false;
+        //     }
+        // }, this);
+
+        this.debugPlayer = game.engine.add.graphics(data.x, data.y);
+
+        // set a fill and line style
+        this.debugPlayer.beginFill(0xff0000);
+        this.debugPlayer.lineStyle(data.shield, data.color, 0.5);
+        this.debugPlayer.drawCircle(0, 0, this.radius * 2);
+        this.debugPlayer.endFill();
+        this.debugPlayer.anchor.setTo(0.5, 0.5);
     }
 
     _createClass(Player, [{
