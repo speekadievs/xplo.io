@@ -822,13 +822,31 @@ class GameService {
             worldY: data.y,
         };
 
-        player.speed = data.speed;
+        // if (PositionService.distanceToPointer(player.player, newPointer) >= 50) {
+        //     player.player.body.x = data.x;
+        //     player.player.body.y = data.y;
+        // }
 
-        if (PositionService.distanceToPointer(player.player, newPointer) <= 30) {
-            player.rotation = PositionService.moveToPointer(player.player, 0, newPointer, 100);
-        } else {
-            player.rotation = PositionService.moveToPointer(player.player, player.speed, newPointer);
-        }
+        player.player.body.x = data.x;
+        player.player.body.y = data.y;
+
+        // Get the timestamp and player telemetry from the server
+        let serverTS = data.ts;
+
+        // Erase all saved moves timestamped before the received server
+        // telemetry
+        this.last_moves = this.last_moves.filter(savedMove => {
+            return savedMove.ts > serverTS;
+        });
+
+        // Calculate a reconciled position using the data from the
+        // server telemetry as a starting point, and then re-applying
+        // the filtered saved moves.
+        this.last_moves.forEach(savedMove => {
+            player.rotation = PositionService.moveToPointer(player.player, player.speed, savedMove)
+        });
+
+        player.speed = data.speed;
 
         if (this.map_group) {
             player.map.x = (player.player.x / (this.properties.server_width / 220)) - 20;
