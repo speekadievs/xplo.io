@@ -1,4 +1,5 @@
 let PositionService = require('./PositionService');
+let Player = require('./Player.js');
 let RemotePlayer = require('./RemotePlayer.js');
 let FoodObject = require('./FoodObject.js');
 let BuffObject = require('./BuffObject.js');
@@ -81,9 +82,7 @@ class GameService {
             timer_event: null
         };
 
-        this.skins = {
-            doge: 'doge'
-        };
+        this.last_moves = [];
     }
 
     onConnected() {
@@ -115,11 +114,7 @@ class GameService {
         map.drawRoundedRect(0, 0, 200, 200, 5);
         map.alpha = 0.5;
 
-        player.map = this.engine.add.graphics(0, 0, this.map_group);
-        player.map.beginFill(0x00FF00);
-        player.map.drawCircle(0, 0, 5);
-        player.map.endFill();
-        player.map.anchor.setTo(0.5, 0.5);
+        player.createMap(this);
 
         if (window.gameMode === 'ctf') {
             let widthPercent = this.properties.base_width / this.properties.server_width * 100;
@@ -178,369 +173,311 @@ class GameService {
     }
 
     createPlayer(data) {
+        try {
+            this.properties.server_width = data.width;
+            this.properties.server_height = data.height;
+            this.properties.base_width = data.base_width;
+            this.properties.base_height = data.base_height;
 
-        this.properties.server_width = data.width;
-        this.properties.server_height = data.height;
-        this.properties.base_width = data.base_width;
-        this.properties.base_height = data.base_height;
+            player = new Player(data, this);
 
-        player = this.engine.add.graphics(data.x, data.y);
-        player.radius = data.size;
+            //camera follow
+            this.engine.camera.x = data.x;
+            this.engine.camera.y = data.y;
+            this.engine.camera.follow(player.player, Phaser.Camera.FOLLOW_LOCKON, 0.5, 0.5);
 
-        // set a fill and line style
-        player.beginFill(data.color);
-        player.lineStyle(data.shield, data.color, 0.5);
-        player.drawCircle(0, 0, player.radius * 2);
-        player.endFill();
-        player.anchor.setTo(0.5, 0.5);
+            //Create buff boxes
+            this.buffs.shield_increase = this.engine.add.group();
+            this.buffs.shield_increase.fixedToCamera = true;
+            this.buffs.shield_increase.cameraOffset.setTo(240, 20);
 
-        if (window.gameMode === 'classic') {
-            if (window.skin) {
-                if (this.engine.cache.checkImageKey(window.skin)) {
-                    let skin = this.engine.add.sprite(0, 0, window.skin, player);
-                    skin.anchor.setTo(0.5, 0.5);
+            let shieldIncrease = this.engine.add.graphics(0, 0, this.buffs.shield_increase);
+            shieldIncrease.beginFill(0x09be00);
+            shieldIncrease.drawRoundedRect(0, 0, 40, 40, 5);
+            shieldIncrease.alpha = 0.5;
 
-                    player.addChild(skin);
+            let shieldIncreaseIcon = this.engine.add.sprite(20, 20, 'shield_increase', this.buffs.shield_increase);
+            shieldIncreaseIcon.anchor.setTo(0.5, 0.5);
+
+            shieldIncrease.addChild(shieldIncreaseIcon);
+
+            this.buffs.shield_decrease = this.engine.add.group();
+            this.buffs.shield_decrease.fixedToCamera = true;
+            this.buffs.shield_decrease.cameraOffset.setTo(240, 20);
+
+            let shieldDecrease = this.engine.add.graphics(0, 0, this.buffs.shield_decrease);
+            shieldDecrease.beginFill(0xbe0000);
+            shieldDecrease.drawRoundedRect(0, 0, 40, 40, 5);
+            shieldDecrease.alpha = 0.5;
+
+            let shieldDecreaseIcon = this.engine.add.sprite(20, 20, 'shield_decrease', this.buffs.shield_decrease);
+            shieldDecreaseIcon.anchor.setTo(0.5, 0.5);
+
+            shieldDecrease.addChild(shieldDecreaseIcon);
+
+            this.buffs.speed_increase = this.engine.add.group();
+            this.buffs.speed_increase.fixedToCamera = true;
+            this.buffs.speed_increase.cameraOffset.setTo(300, 20);
+
+            let speedIncrease = this.engine.add.graphics(0, 0, this.buffs.speed_increase);
+            speedIncrease.beginFill(0x09be00);
+            speedIncrease.drawRoundedRect(0, 0, 40, 40, 5);
+            speedIncrease.alpha = 0.5;
+
+            let speedIncreaseIcon = this.engine.add.sprite(20, 20, 'speed_increase', this.buffs.speed_increase);
+            speedIncreaseIcon.anchor.setTo(0.5, 0.5);
+
+            speedIncrease.addChild(speedIncreaseIcon);
+
+            this.buffs.speed_decrease = this.engine.add.group();
+            this.buffs.speed_decrease.fixedToCamera = true;
+            this.buffs.speed_decrease.cameraOffset.setTo(300, 20);
+
+            let speedDecrease = this.engine.add.graphics(0, 0, this.buffs.speed_decrease);
+            speedDecrease.beginFill(0xbe0000);
+            speedDecrease.drawRoundedRect(0, 0, 40, 40, 5);
+            speedDecrease.alpha = 0.5;
+
+            let speedDecreaseIcon = this.engine.add.sprite(20, 20, 'speed_decrease', this.buffs.speed_decrease);
+            speedDecreaseIcon.anchor.setTo(0.5, 0.5);
+
+            speedDecrease.addChild(speedDecreaseIcon);
+
+            this.buffs.shield_increase.visible = false;
+            this.buffs.shield_decrease.visible = false;
+            this.buffs.speed_increase.visible = false;
+            this.buffs.speed_decrease.visible = false;
+
+            //Create leaderboard box
+            this.leaderboard = this.engine.add.group();
+            this.leaderboard.fixedToCamera = true;
+            this.leaderboard.cameraOffset.setTo(20, 20);
+
+            let leaderBoard = this.engine.add.graphics(0, 0, this.leaderboard);
+            leaderBoard.beginFill(0x000000);
+            leaderBoard.drawRoundedRect(0, 0, 200, 300, 5);
+            leaderBoard.alpha = 0.5;
+
+            this.leaderboard.text = this.engine.add.text(0, 0, 'Leaderboard', {
+                font: "21px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.leaderboard);
+            this.leaderboard.text.setTextBounds(0, 10, 200, 300);
+            this.leaderboard.text.boundsAlignV = 'top';
+            this.leaderboard.text.boundsAlignH = 'center';
+
+            //Create shield box
+            this.shield_box = this.engine.add.group();
+            this.shield_box.fixedToCamera = true;
+            this.shield_box.cameraOffset.setTo(20, 340);
+
+            let shieldBox = this.engine.add.graphics(0, 0, this.shield_box);
+            shieldBox.beginFill(data.food_color);
+            shieldBox.drawRoundedRect(0, 0, 70, 70, 5);
+            shieldBox.alpha = 0.5;
+
+            this.shield_box.text = this.engine.add.text(0, 0, '0%', {
+                font: "21px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.shield_box);
+            this.shield_box.text.setTextBounds(0, 0, 71, 71);
+            this.shield_box.text.boundsAlignV = 'middle';
+            this.shield_box.text.boundsAlignH = 'center';
+
+            //Create mine box
+            this.mine_box = this.engine.add.group();
+            this.mine_box.fixedToCamera = true;
+            this.mine_box.cameraOffset.setTo(20, 430);
+
+            let mineBox = this.engine.add.graphics(0, 0, this.mine_box);
+            mineBox.beginFill(data.mine_color);
+            mineBox.drawRoundedRect(0, 0, 70, 70, 5);
+            mineBox.alpha = 0.5;
+
+            this.mine_box.text = this.engine.add.text(0, 0, '0', {
+                font: "21px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.mine_box);
+            this.mine_box.text.setTextBounds(0, 0, 71, 71);
+            this.mine_box.text.boundsAlignV = 'middle';
+            this.mine_box.text.boundsAlignH = 'center';
+
+            //Create grenade box
+            this.grenade_box = this.engine.add.group();
+            this.grenade_box.fixedToCamera = true;
+            this.grenade_box.cameraOffset.setTo(20, 520);
+
+            let grenadeBox = this.engine.add.graphics(0, 0, this.grenade_box);
+            grenadeBox.beginFill(data.grenade_color);
+            grenadeBox.drawRoundedRect(0, 0, 70, 70, 5);
+            grenadeBox.alpha = 0.5;
+
+            this.grenade_box.text = this.engine.add.text(0, 0, '0', {
+                font: "21px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.grenade_box);
+            this.grenade_box.text.setTextBounds(0, 0, 71, 71);
+            this.grenade_box.text.boundsAlignV = 'middle';
+            this.grenade_box.text.boundsAlignH = 'center';
+
+            //Create rank box
+            this.rank_box = this.engine.add.group();
+            this.rank_box.fixedToCamera = true;
+            this.rank_box.cameraOffset.setTo(20, (window.innerHeight * window.devicePixelRatio) - 60);
+
+            let rankBox = this.engine.add.graphics(0, 0, this.rank_box);
+            rankBox.beginFill(0x000000);
+            rankBox.drawRoundedRect(0, 0, 120, 40, 5);
+            rankBox.alpha = 0.5;
+
+            this.rank_box.text = this.engine.add.text(0, 0, '', {
+                font: "15px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.rank_box);
+            this.rank_box.text.setTextBounds(10, 5, 120, 40);
+            this.rank_box.text.boundsAlignV = 'middle';
+            this.rank_box.text.boundsAlignH = 'left';
+
+            this.createLeaderboard(data);
+
+            this.createMiniMap();
+
+            if (window.gameMode !== 'classic') {
+                //Create red score
+                this.red_score = this.engine.add.group();
+                this.red_score.fixedToCamera = true;
+                this.red_score.cameraOffset.setTo(((window.innerWidth * window.devicePixelRatio) / 2) - 125, 20);
+
+                let redScore = this.engine.add.graphics(0, 0, this.red_score);
+                redScore.beginFill(0xbe0000);
+                redScore.drawRoundedRect(0, 0, 70, 70, 5);
+                redScore.alpha = 0.5;
+
+                this.red_score.text = this.engine.add.text(0, 0, '0', {
+                    font: "21px Arial",
+                    fill: "#ffffff",
+                    align: "center"
+                }, this.red_score);
+                this.red_score.text.setTextBounds(0, 0, 71, 71);
+                this.red_score.text.boundsAlignV = 'middle';
+                this.red_score.text.boundsAlignH = 'center';
+
+                //Create match timer
+                this.match_time = this.engine.add.group();
+                this.match_time.fixedToCamera = true;
+                this.match_time.cameraOffset.setTo(((window.innerWidth * window.devicePixelRatio) / 2) - 35, 20);
+
+                let matchTime = this.engine.add.graphics(0, 0, this.match_time);
+                matchTime.beginFill(0x000000);
+                matchTime.drawRoundedRect(0, 0, 70, 70, 5);
+                matchTime.alpha = 0.5;
+
+                this.match_time.text = this.engine.add.text(0, 0, '00:00', {
+                    font: "21px Arial",
+                    fill: "#ffffff",
+                    align: "center"
+                }, this.match_time);
+                this.match_time.text.setTextBounds(0, 0, 71, 71);
+                this.match_time.text.boundsAlignV = 'middle';
+                this.match_time.text.boundsAlignH = 'center';
+
+                //Create blue score
+                this.blue_score = this.engine.add.group();
+                this.blue_score.fixedToCamera = true;
+                this.blue_score.cameraOffset.setTo(((window.innerWidth * window.devicePixelRatio) / 2) + 55, 20);
+
+                let blueScore = this.engine.add.graphics(0, 0, this.blue_score);
+                blueScore.beginFill(0x0000FF);
+                blueScore.drawRoundedRect(0, 0, 70, 70, 5);
+                blueScore.alpha = 0.5;
+
+                this.blue_score.text = this.engine.add.text(0, 0, '0', {
+                    font: "21px Arial",
+                    fill: "#ffffff",
+                    align: "center"
+                }, this.blue_score);
+                this.blue_score.text.setTextBounds(0, 0, 71, 71);
+                this.blue_score.text.boundsAlignV = 'middle';
+                this.blue_score.text.boundsAlignH = 'center';
+
+                let currentTime = (new Date()).getTime();
+
+                let seconds = data.match.total_time - ((currentTime - data.match.start_time) / 1000);
+
+                // Create a custom timer
+                this.match.timer = this.engine.time.create();
+
+                // Create a delayed event 1m and 30s from now
+                this.match.timer_event = this.match.timer.add(Phaser.Timer.SECOND * seconds, () => {
+                    this.match.timer.stop();
+                }, this.engine);
+
+                // Start the timer
+                this.match.timer.start();
+
+                if (window.gameMode === 'ctf') {
+                    try {
+                        if (data.match.red_flag) {
+                            this.red_flag = new FlagObject(data.match.red_flag, this);
+
+                            if (data.match.red_flag.taken) {
+                                this.red_flag.hide();
+                            }
+                        }
+
+                        if (data.match.blue_flag) {
+                            this.blue_flag = new FlagObject(data.match.blue_flag, this);
+
+                            if (data.match.blue_flag.taken) {
+                                this.blue_flag.hide();
+                            }
+                        }
+
+                        this.red_base = this.engine.add.graphics(1000, 1000);
+                        this.red_base.beginFill(0xbe0000);
+                        this.red_base.drawRoundedRect(0, 0, data.base_width, data.base_height, 5);
+                        this.red_base.alpha = 0.5;
+
+                        this.blue_base = this.engine.add.graphics(1000, 1000);
+                        this.blue_base.beginFill(0x0000FF);
+                        this.blue_base.drawRoundedRect((this.properties.gameWidth - 3000) - data.base_width, (this.properties.gameHeight - 3000) - data.base_height, data.base_width, data.base_height, 5);
+                        this.blue_base.alpha = 0.5;
+
+                    } catch (e) {
+                        console.error(e);
+                    }
                 }
             }
-        }
 
-        let style = {
-            font: "14px Arial",
-            fill: "#ffffff",
-            stroke: '#000000',
-            strokeThickness: 4,
-            wordWrap: true,
-            wordWrapWidth: player.width,
-            align: "center"
-        };
+            this.latency = 0;
+            this.ping_time = 0;
 
-        if (data.username.length > 30) {
-            data.username = username.substr(0, 27) + '...';
-        }
-
-        player.text = this.engine.add.text(data.x, data.y, data.username, style);
-
-        player.text.anchor.set(0.5);
-
-        player.updateTextPos = function () {
-            this.text.position.copyFrom(this.position);
-        };
-
-        player.body_size = data.size;
-
-        //set the initial size;
-        player.id = data.id;
-        player.username = data.username;
-        player.initial_size = data.size;
-        player.type = "player_body";
-        player.shield = data.shield;
-        player.initial_shield = data.shield;
-        player.initial_color = data.color;
-        player.max_shield = data.max_shield;
-        player.team = data.team;
-        player.mines = [];
-        player.grenades = [];
-
-        player.alpha = 0;
-        player.god_mode = this.engine.add.tween(player).to({alpha: 1}, 500, Phaser.Easing.Linear.None, true, 0, 1000, true);
-
-        // add body to the shape
-        this.engine.physics.p2.enableBody(player);
-        player.body.clearShapes();
-        player.body.addCircle((player.body_size + (player.shield / 2)), 0, 0);
-        player.body.data.shapes[0].sensor = true;
-
-        //camera follow
-        this.engine.camera.x = data.x;
-        this.engine.camera.y = data.y;
-        this.engine.camera.follow(player, Phaser.Camera.FOLLOW_LOCKON, 0.5, 0.5);
-
-        //Create buff boxes
-        this.buffs.shield_increase = this.engine.add.group();
-        this.buffs.shield_increase.fixedToCamera = true;
-        this.buffs.shield_increase.cameraOffset.setTo(240, 20);
-
-        let shieldIncrease = this.engine.add.graphics(0, 0, this.buffs.shield_increase);
-        shieldIncrease.beginFill(0x09be00);
-        shieldIncrease.drawRoundedRect(0, 0, 40, 40, 5);
-        shieldIncrease.alpha = 0.5;
-
-        let shieldIncreaseIcon = this.engine.add.sprite(20, 20, 'shield_increase', this.buffs.shield_increase);
-        shieldIncreaseIcon.anchor.setTo(0.5, 0.5);
-
-        shieldIncrease.addChild(shieldIncreaseIcon);
-
-        this.buffs.shield_decrease = this.engine.add.group();
-        this.buffs.shield_decrease.fixedToCamera = true;
-        this.buffs.shield_decrease.cameraOffset.setTo(240, 20);
-
-        let shieldDecrease = this.engine.add.graphics(0, 0, this.buffs.shield_decrease);
-        shieldDecrease.beginFill(0xbe0000);
-        shieldDecrease.drawRoundedRect(0, 0, 40, 40, 5);
-        shieldDecrease.alpha = 0.5;
-
-        let shieldDecreaseIcon = this.engine.add.sprite(20, 20, 'shield_decrease', this.buffs.shield_decrease);
-        shieldDecreaseIcon.anchor.setTo(0.5, 0.5);
-
-        shieldDecrease.addChild(shieldDecreaseIcon);
-
-        this.buffs.speed_increase = this.engine.add.group();
-        this.buffs.speed_increase.fixedToCamera = true;
-        this.buffs.speed_increase.cameraOffset.setTo(300, 20);
-
-        let speedIncrease = this.engine.add.graphics(0, 0, this.buffs.speed_increase);
-        speedIncrease.beginFill(0x09be00);
-        speedIncrease.drawRoundedRect(0, 0, 40, 40, 5);
-        speedIncrease.alpha = 0.5;
-
-        let speedIncreaseIcon = this.engine.add.sprite(20, 20, 'speed_increase', this.buffs.speed_increase);
-        speedIncreaseIcon.anchor.setTo(0.5, 0.5);
-
-        speedIncrease.addChild(speedIncreaseIcon);
-
-        this.buffs.speed_decrease = this.engine.add.group();
-        this.buffs.speed_decrease.fixedToCamera = true;
-        this.buffs.speed_decrease.cameraOffset.setTo(300, 20);
-
-        let speedDecrease = this.engine.add.graphics(0, 0, this.buffs.speed_decrease);
-        speedDecrease.beginFill(0xbe0000);
-        speedDecrease.drawRoundedRect(0, 0, 40, 40, 5);
-        speedDecrease.alpha = 0.5;
-
-        let speedDecreaseIcon = this.engine.add.sprite(20, 20, 'speed_decrease', this.buffs.speed_decrease);
-        speedDecreaseIcon.anchor.setTo(0.5, 0.5);
-
-        speedDecrease.addChild(speedDecreaseIcon);
-
-        this.buffs.shield_increase.visible = false;
-        this.buffs.shield_decrease.visible = false;
-        this.buffs.speed_increase.visible = false;
-        this.buffs.speed_decrease.visible = false;
-
-        //Create leaderboard box
-        this.leaderboard = this.engine.add.group();
-        this.leaderboard.fixedToCamera = true;
-        this.leaderboard.cameraOffset.setTo(20, 20);
-
-        let leaderBoard = this.engine.add.graphics(0, 0, this.leaderboard);
-        leaderBoard.beginFill(0x000000);
-        leaderBoard.drawRoundedRect(0, 0, 200, 300, 5);
-        leaderBoard.alpha = 0.5;
-
-        this.leaderboard.text = this.engine.add.text(0, 0, 'Leaderboard', {
-            font: "21px Arial",
-            fill: "#ffffff",
-            align: "center"
-        }, this.leaderboard);
-        this.leaderboard.text.setTextBounds(0, 10, 200, 300);
-        this.leaderboard.text.boundsAlignV = 'top';
-        this.leaderboard.text.boundsAlignH = 'center';
-
-        style.wordWrapWidth = 70;
-        style.strokeThickness = 0;
-
-        //Create shield box
-        this.shield_box = this.engine.add.group();
-        this.shield_box.fixedToCamera = true;
-        this.shield_box.cameraOffset.setTo(20, 340);
-
-        let shieldBox = this.engine.add.graphics(0, 0, this.shield_box);
-        shieldBox.beginFill(data.food_color);
-        shieldBox.drawRoundedRect(0, 0, 70, 70, 5);
-        shieldBox.alpha = 0.5;
-
-        this.shield_box.text = this.engine.add.text(0, 0, '0%', {
-            font: "21px Arial",
-            fill: "#ffffff",
-            align: "center"
-        }, this.shield_box);
-        this.shield_box.text.setTextBounds(0, 0, 71, 71);
-        this.shield_box.text.boundsAlignV = 'middle';
-        this.shield_box.text.boundsAlignH = 'center';
-
-        //Create mine box
-        this.mine_box = this.engine.add.group();
-        this.mine_box.fixedToCamera = true;
-        this.mine_box.cameraOffset.setTo(20, 430);
-
-        let mineBox = this.engine.add.graphics(0, 0, this.mine_box);
-        mineBox.beginFill(data.mine_color);
-        mineBox.drawRoundedRect(0, 0, 70, 70, 5);
-        mineBox.alpha = 0.5;
-
-        this.mine_box.text = this.engine.add.text(0, 0, '0', {
-            font: "21px Arial",
-            fill: "#ffffff",
-            align: "center"
-        }, this.mine_box);
-        this.mine_box.text.setTextBounds(0, 0, 71, 71);
-        this.mine_box.text.boundsAlignV = 'middle';
-        this.mine_box.text.boundsAlignH = 'center';
-
-        //Create grenade box
-        this.grenade_box = this.engine.add.group();
-        this.grenade_box.fixedToCamera = true;
-        this.grenade_box.cameraOffset.setTo(20, 520);
-
-        let grenadeBox = this.engine.add.graphics(0, 0, this.grenade_box);
-        grenadeBox.beginFill(data.grenade_color);
-        grenadeBox.drawRoundedRect(0, 0, 70, 70, 5);
-        grenadeBox.alpha = 0.5;
-
-        this.grenade_box.text = this.engine.add.text(0, 0, '0', {
-            font: "21px Arial",
-            fill: "#ffffff",
-            align: "center"
-        }, this.grenade_box);
-        this.grenade_box.text.setTextBounds(0, 0, 71, 71);
-        this.grenade_box.text.boundsAlignV = 'middle';
-        this.grenade_box.text.boundsAlignH = 'center';
-
-        //Create rank box
-        this.rank_box = this.engine.add.group();
-        this.rank_box.fixedToCamera = true;
-        this.rank_box.cameraOffset.setTo(20, (window.innerHeight * window.devicePixelRatio) - 60);
-
-        let rankBox = this.engine.add.graphics(0, 0, this.rank_box);
-        rankBox.beginFill(0x000000);
-        rankBox.drawRoundedRect(0, 0, 120, 40, 5);
-        rankBox.alpha = 0.5;
-
-        this.rank_box.text = this.engine.add.text(0, 0, '', {
-            font: "15px Arial",
-            fill: "#ffffff",
-            align: "center"
-        }, this.rank_box);
-        this.rank_box.text.setTextBounds(10, 5, 120, 40);
-        this.rank_box.text.boundsAlignV = 'middle';
-        this.rank_box.text.boundsAlignH = 'left';
-
-        this.createLeaderboard(data);
-
-        this.createMiniMap();
-
-        if (window.gameMode !== 'classic') {
-            //Create red score
-            this.red_score = this.engine.add.group();
-            this.red_score.fixedToCamera = true;
-            this.red_score.cameraOffset.setTo(((window.innerWidth * window.devicePixelRatio) / 2) - 125, 20);
-
-            let redScore = this.engine.add.graphics(0, 0, this.red_score);
-            redScore.beginFill(0xbe0000);
-            redScore.drawRoundedRect(0, 0, 70, 70, 5);
-            redScore.alpha = 0.5;
-
-            this.red_score.text = this.engine.add.text(0, 0, '0', {
-                font: "21px Arial",
-                fill: "#ffffff",
-                align: "center"
-            }, this.red_score);
-            this.red_score.text.setTextBounds(0, 0, 71, 71);
-            this.red_score.text.boundsAlignV = 'middle';
-            this.red_score.text.boundsAlignH = 'center';
-
-            //Create match timer
-            this.match_time = this.engine.add.group();
-            this.match_time.fixedToCamera = true;
-            this.match_time.cameraOffset.setTo(((window.innerWidth * window.devicePixelRatio) / 2) - 35, 20);
-
-            let matchTime = this.engine.add.graphics(0, 0, this.match_time);
-            matchTime.beginFill(0x000000);
-            matchTime.drawRoundedRect(0, 0, 70, 70, 5);
-            matchTime.alpha = 0.5;
-
-            this.match_time.text = this.engine.add.text(0, 0, '00:00', {
-                font: "21px Arial",
-                fill: "#ffffff",
-                align: "center"
-            }, this.match_time);
-            this.match_time.text.setTextBounds(0, 0, 71, 71);
-            this.match_time.text.boundsAlignV = 'middle';
-            this.match_time.text.boundsAlignH = 'center';
-
-            //Create blue score
-            this.blue_score = this.engine.add.group();
-            this.blue_score.fixedToCamera = true;
-            this.blue_score.cameraOffset.setTo(((window.innerWidth * window.devicePixelRatio) / 2) + 55, 20);
-
-            let blueScore = this.engine.add.graphics(0, 0, this.blue_score);
-            blueScore.beginFill(0x0000FF);
-            blueScore.drawRoundedRect(0, 0, 70, 70, 5);
-            blueScore.alpha = 0.5;
-
-            this.blue_score.text = this.engine.add.text(0, 0, '0', {
-                font: "21px Arial",
-                fill: "#ffffff",
-                align: "center"
-            }, this.blue_score);
-            this.blue_score.text.setTextBounds(0, 0, 71, 71);
-            this.blue_score.text.boundsAlignV = 'middle';
-            this.blue_score.text.boundsAlignH = 'center';
-
-            let currentTime = (new Date()).getTime();
-
-            let seconds = data.match.total_time - ((currentTime - data.match.start_time) / 1000);
-
-            // Create a custom timer
-            this.match.timer = this.engine.time.create();
-
-            // Create a delayed event 1m and 30s from now
-            this.match.timer_event = this.match.timer.add(Phaser.Timer.SECOND * seconds, () => {
-                this.match.timer.stop();
-            }, this.engine);
-
-            // Start the timer
-            this.match.timer.start();
-
-            if (window.gameMode === 'ctf') {
-                try {
-                    if (data.match.red_flag) {
-                        this.red_flag = new FlagObject(data.match.red_flag, this);
-
-                        if (data.match.red_flag.taken) {
-                            this.red_flag.hide();
-                        }
-                    }
-
-                    if (data.match.blue_flag) {
-                        this.blue_flag = new FlagObject(data.match.blue_flag, this);
-
-                        if (data.match.blue_flag.taken) {
-                            this.blue_flag.hide();
-                        }
-                    }
-
-                    this.red_base = this.engine.add.graphics(1000, 1000);
-                    this.red_base.beginFill(0xbe0000);
-                    this.red_base.drawRoundedRect(0, 0, data.base_width, data.base_height, 5);
-                    this.red_base.alpha = 0.5;
-
-                    this.blue_base = this.engine.add.graphics(1000, 1000);
-                    this.blue_base.beginFill(0x0000FF);
-                    this.blue_base.drawRoundedRect((this.properties.gameWidth - 3000) - data.base_width, (this.properties.gameHeight - 3000) - data.base_height, data.base_width, data.base_height, 5);
-                    this.blue_base.alpha = 0.5;
-
-                } catch (e) {
-                    console.error(e);
-                }
-            }
-        }
-
-        this.socket.emit('get-leaderboard');
-        this.leaderboard_interval = setInterval(() => {
             this.socket.emit('get-leaderboard');
-        }, 2000);
+            this.leaderboard_interval = setInterval(() => {
+                this.socket.emit('get-leaderboard');
+            }, 2000);
 
-        this.ping_interval = setInterval(() => {
-            this.socket.emit('ping');
-        }, 10000);
+            this.ping_interval = setInterval(() => {
+                this.socket.emit('last-move');
+            }, 10000);
 
-        if (window.gameMode !== 'classic') {
-            this.score_interval = setInterval(() => {
-                this.socket.emit('get-score');
-            }, 5000);
+            if (window.gameMode !== 'classic') {
+                this.score_interval = setInterval(() => {
+                    this.socket.emit('get-score');
+                }, 5000);
+            }
+        } catch (e) {
+            console.error(e);
         }
+    }
+
+    onPong() {
+        this.latency = (new Date()).getTime() - this.ping_time;
     }
 
     createLeaderboard(data) {
@@ -854,14 +791,14 @@ class GameService {
             worldY: data.y,
         };
 
-        let distance = PositionService.distanceToPointer(movePlayer.player, newPointer);
-        let speed = distance / 0.06;
+        if (PositionService.distanceToPointer(movePlayer.player, newPointer) <= 30) {
+            movePlayer.rotation = PositionService.moveToPointer(movePlayer.player, 0, newPointer, 100);
+        } else {
+            movePlayer.rotation = PositionService.moveToPointer(movePlayer.player, data.speed, newPointer);
+        }
 
-        movePlayer.rotation = PositionService.moveToPointer(movePlayer.player, speed, newPointer);
-
-
-        movePlayer.map.x = (movePlayer.player.x / (10000 / 220)) - 20;
-        movePlayer.map.y = (movePlayer.player.y / (10000 / 220)) - 20;
+        movePlayer.map.x = (movePlayer.player.x / (this.properties.server_width / 220)) - 20;
+        movePlayer.map.y = (movePlayer.player.y / (this.properties.server_height / 220)) - 20;
 
         //check if the server enemy size is not equivalent to the client
         if (data.shield !== movePlayer.player.shield) {
@@ -885,26 +822,29 @@ class GameService {
             worldY: data.y,
         };
 
-        let distance = PositionService.distanceToPointer(player, newPointer);
-        let speed = distance / 0.06;
+        player.speed = data.speed;
 
-        player.rotation = PositionService.moveToPointer(player, speed, newPointer);
+        if (PositionService.distanceToPointer(player.player, newPointer) <= 30) {
+            player.rotation = PositionService.moveToPointer(player.player, 0, newPointer, 100);
+        } else {
+            player.rotation = PositionService.moveToPointer(player.player, player.speed, newPointer);
+        }
 
         if (this.map_group) {
-            player.map.x = (player.x / (this.properties.server_width / 220)) - 20;
-            player.map.y = (player.y / (this.properties.server_height / 220)) - 20;
+            player.map.x = (player.player.x / (this.properties.server_width / 220)) - 20;
+            player.map.y = (player.player.y / (this.properties.server_height / 220)) - 20;
         }
     }
 
     onGained(data) {
         player.shield = data.new_shield;
 
-        player.graphicsData[0].lineWidth = data.new_shield;
+        player.player.graphicsData[0].lineWidth = data.new_shield;
 
         //create new body
-        player.body.clearShapes();
-        player.body.addCircle((player.body_size + (player.shield / 2)), 0, 0);
-        player.body.data.shapes[0].sensor = true;
+        player.player.body.clearShapes();
+        player.player.body.addCircle((player.body_size + (player.shield / 2)), 0, 0);
+        player.player.body.data.shapes[0].sensor = true;
 
         let percent = ((data.new_shield - 10) * 100) / (player.max_shield - 10);
 
@@ -1142,37 +1082,13 @@ class GameService {
         }
 
         if (data.id === player.id) {
-            if (!player.map) {
-                return false;
-            }
-
-            player.map.destroy();
-
-            if (this.map_group) {
-                player.map = this.engine.add.graphics(0, 0, this.map_group);
-                player.map.beginFill(0xFFFF00);
-                player.map.drawCircle(0, 0, 10);
-                player.map.endFill();
-                player.map.anchor.setTo(0.5, 0.5);
-            }
+            player.createLeader(this);
 
             this.enemies.forEach(enemy => {
                 enemy.resetMap(this);
             })
         } else {
-            if (!player.map) {
-                return false;
-            }
-
-            player.map.destroy();
-
-            if (this.map_group) {
-                player.map = this.engine.add.graphics(0, 0, this.map_group);
-                player.map.beginFill(0x00FF00);
-                player.map.drawCircle(0, 0, 5);
-                player.map.endFill();
-                player.map.anchor.setTo(0.5, 0.5);
-            }
+            player.resetMap();
 
             this.enemies.forEach(enemy => {
                 if (enemy.id === data.id) {
@@ -1187,7 +1103,7 @@ class GameService {
     onStopGodMode(data) {
         if (data.id === player.id) {
             player.god_mode.stop();
-            player.alpha = 1;
+            player.player.alpha = 1;
         } else {
             this.enemies.forEach(enemy => {
                 if (enemy.id === data.id) {
@@ -1207,20 +1123,10 @@ class GameService {
     }
 
     onFlagPickup(data) {
-        console.log('flag picked');
         this[data.team + '_flag'].hide();
 
         if (data.user_id === player.id) {
-            player.flag = this.engine.add.sprite(0, 0, 'taken_flag', player);
-            player.flag.anchor.setTo(0.5, 0.5);
-            player.addChild(player.flag);
-
-            player.map.destroy();
-            player.map = this.engine.add.graphics(0, 0, this.map_group);
-            player.map.beginFill(0x00FF00);
-            player.map.drawCircle(0, 0, 10);
-            player.map.endFill();
-            player.map.anchor.setTo(0.5, 0.5);
+            player.addFlag(this);
         }
 
         this.enemies.forEach(enemy => {
@@ -1246,17 +1152,7 @@ class GameService {
         }
 
         if (player.team === team) {
-            if (player.flag) {
-                player.flag.destroy();
-                player.flag = null;
-
-                player.map.destroy();
-                player.map = this.engine.add.graphics(0, 0, this.map_group);
-                player.map.beginFill(0x00FF00);
-                player.map.drawCircle(0, 0, 5);
-                player.map.endFill();
-                player.map.anchor.setTo(0.5, 0.5);
-            }
+            player.removeFlag(this);
         }
 
         this.enemies.forEach(enemy => {
@@ -1281,7 +1177,7 @@ class GameService {
         if (player) {
             player.text.destroy();
             player.map.destroy();
-            player.destroy();
+            player.player.destroy();
 
             let deadBlock = jQuery('#dead');
             deadBlock.find('.score').text(data.score);
@@ -1308,18 +1204,17 @@ class GameService {
                     aipDisplayTag.refresh('xplo-io_300x250');
                 });
 
-                ga('set', 'page', '/died');
-                ga('send', 'pageview');
+                //ga('set', 'page', '/died');
+                //ga('send', 'pageview');
             }, 1000);
         }
     }
 
     onMatchEnded(data) {
-        console.log(data);
         if (player && this.properties.in_game) {
             player.text.destroy();
             player.map.destroy();
-            player.destroy();
+            player.player.destroy();
 
             jQuery('#red-won').hide();
             jQuery('#blue-won').hide();
@@ -1360,8 +1255,8 @@ class GameService {
                 aipDisplayTag.refresh('xplo-io_300x250');
             });
 
-            ga('set', 'page', '/died');
-            ga('send', 'pageview');
+            //ga('set', 'page', '/died');
+            //ga('send', 'pageview');
         }
     }
 
@@ -1413,9 +1308,17 @@ class GameService {
         }
 
         if (window.gameMode !== 'classic') {
-            this.red_score.destroy();
-            this.blue_score.destroy();
-            this.match_time.destroy();
+            if (this.red_score) {
+                this.red_score.destroy();
+            }
+
+            if (this.blue_score) {
+                this.blue_score.destroy();
+            }
+
+            if (this.match_time) {
+                this.match_time.destroy();
+            }
 
             this.match.timer = null;
             this.match.timer_event = null;

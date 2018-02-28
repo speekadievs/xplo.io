@@ -23,6 +23,10 @@ class PositionService {
 
     }
 
+    static moveToPointerPos(pos, speed, pointer) {
+
+    }
+
     /**
      * @param displayObject
      * @param pointer

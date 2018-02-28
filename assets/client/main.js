@@ -1,4 +1,4 @@
-let skins = ["abkhazia", "afghanistan", "albania", "algeria", "andorra", "angola", "anguilla", "argentina", "armenia", "aruba", "australia", "austria", "azerbaijan", "bahamas", "bahrain", "bangladesh", "barbados", "belarus", "belgium", "belize", "benin", "bermuda", "bhutan-1", "bhutan", "bolivia", "bonaire", "botswana", "brazil", "british-columbia", "british-virgin-islands", "brunei", "bulgaria", "burkina-faso", "burundi", "cambodia", "cameroon", "canada", "canary-islands", "cape-verde", "cayman-islands", "central-african-republic", "chile", "china", "cocos-island", "colombia", "comoros", "cook-islands", "costa-rica", "croatia", "cuba", "curacao", "cyprus", "czech-republic", "denmark", "doge", "dominica", "dominican-republic", "ecuador", "egypt", "england", "estonia", "ethiopia", "european-union", "fiji", "finland", "france", "gabon", "gambia", "georgia", "germany", "ghana", "greece", "greenland", "grenada", "guam", "guatemala", "guernsey", "guinea", "guyana", "haiti", "hawaii", "honduras", "hong-kong", "hungary", "iceland", "india", "indonesia", "iran", "iraq", "ireland", "israel", "italy", "jamaica", "japan", "jersey", "jordan", "kazakhstan", "kenya", "kiribati", "kosovo", "kuwait", "kyrgyzstan", "laos", "latvia", "lebanon", "lesotho", "liberia", "libya", "liechtenstein", "lithuania", "luxembourg", "madagascar", "malaysia", "maldives", "mali", "malta", "martinique", "mauritania", "mauritius", "melilla", "mexico", "micronesia", "moldova", "monaco", "mongolia", "montenegro", "montserrat", "morocco", "mozambique", "myanmar", "namibia", "nato", "nauru", "nepal", "netherlands", "new-zealand", "nicaragua", "niger", "nigeria", "north-korea", "northen-cyprus", "norway", "oman", "ossetia", "pakistan", "palau", "palestine", "panama", "paraguay", "pepe", "peru", "philippines", "pitcairn-islands", "portugal", "puerto-rico", "qatar", "republic-of-macedonia", "republic-of-poland", "republic-of-the-congo", "romania", "russia", "rwanda", "saba-island", "salvador", "samoa", "san-marino", "sardinia", "saudi-arabia", "scotland", "senegal", "serbia", "seychelles", "singapore", "slovakia", "slovenia", "somalia", "somaliland", "south-africa", "south-korea", "south-sudan", "spain", "sudan", "suriname", "swaziland", "sweden", "switzerland", "syria", "taiwan", "tajikistan", "tanzania", "thailand", "tibet", "togo", "tokelau", "tonga", "transnistria", "tunisia", "turkey", "turkmenistan", "tuvalu", "uganda", "ukraine", "united-arab-emirates", "united-kingdom", "united-nations", "united-states-of-america", "uruguay", "uzbekistn", "vanuatu", "vatican-city", "venezuela", "vietnam", "virgin-islands", "wales", "yemen", "zambia", "zimbabwe"];
+window.skins = ["abkhazia", "afghanistan", "albania", "algeria", "andorra", "angola", "anguilla", "argentina", "armenia", "aruba", "australia", "austria", "azerbaijan", "bahamas", "bahrain", "bangladesh", "barbados", "belarus", "belgium", "belize", "benin", "bermuda", "bhutan-1", "bhutan", "bolivia", "bonaire", "botswana", "brazil", "british-columbia", "british-virgin-islands", "brunei", "bulgaria", "burkina-faso", "burundi", "cambodia", "cameroon", "canada", "canary-islands", "cape-verde", "cayman-islands", "central-african-republic", "chile", "china", "cocos-island", "colombia", "comoros", "cook-islands", "costa-rica", "croatia", "cuba", "curacao", "cyprus", "czech-republic", "denmark", "doge", "dominica", "dominican-republic", "ecuador", "egypt", "england", "estonia", "ethiopia", "european-union", "fiji", "finland", "france", "gabon", "gambia", "georgia", "germany", "ghana", "greece", "greenland", "grenada", "guam", "guatemala", "guernsey", "guinea", "guyana", "haiti", "hawaii", "honduras", "hong-kong", "hungary", "iceland", "india", "indonesia", "iran", "iraq", "ireland", "israel", "italy", "jamaica", "japan", "jersey", "jordan", "kazakhstan", "kenya", "kiribati", "kosovo", "kuwait", "kyrgyzstan", "laos", "latvia", "lebanon", "lesotho", "liberia", "libya", "liechtenstein", "lithuania", "luxembourg", "madagascar", "malaysia", "maldives", "mali", "malta", "martinique", "mauritania", "mauritius", "melilla", "mexico", "micronesia", "moldova", "monaco", "mongolia", "montenegro", "montserrat", "morocco", "mozambique", "myanmar", "namibia", "nato", "nauru", "nepal", "netherlands", "new-zealand", "nicaragua", "niger", "nigeria", "north-korea", "northen-cyprus", "norway", "oman", "ossetia", "pakistan", "palau", "palestine", "panama", "paraguay", "pepe", "peru", "philippines", "pitcairn-islands", "portugal", "puerto-rico", "qatar", "republic-of-macedonia", "republic-of-poland", "republic-of-the-congo", "romania", "russia", "rwanda", "saba-island", "salvador", "samoa", "san-marino", "sardinia", "saudi-arabia", "scotland", "senegal", "serbia", "seychelles", "singapore", "slovakia", "slovenia", "somalia", "somaliland", "south-africa", "south-korea", "south-sudan", "spain", "sudan", "suriname", "swaziland", "sweden", "switzerland", "syria", "taiwan", "tajikistan", "tanzania", "thailand", "tibet", "togo", "tokelau", "tonga", "transnistria", "tunisia", "turkey", "turkmenistan", "tuvalu", "uganda", "ukraine", "united-arab-emirates", "united-kingdom", "united-nations", "united-states-of-america", "uruguay", "uzbekistn", "vanuatu", "vatican-city", "venezuela", "vietnam", "virgin-islands", "wales", "yemen", "zambia", "zimbabwe"];
 
 window.jQuery = require('jquery');
 window.moment = require('moment');
@@ -21,6 +21,7 @@ window.switchingRegion = false;
 window.playClicked = false;
 window.playCount = 0;
 window.gameMode = 'classic';
+window.updateCount = 0;
 
 const customParser = require('socket.io-msgpack-parser');
 
@@ -64,7 +65,7 @@ window.chooseRegion = function (region) {
         jQuery('#connecting').hide();
         jQuery('#login').fadeIn();
 
-        let engine = new Phaser.Game((window.innerWidth * window.devicePixelRatio), (window.innerHeight * window.devicePixelRatio), Phaser.CANVAS, 'game');
+        let engine = new Phaser.Game((window.innerWidth), (window.innerHeight), Phaser.CANVAS, 'game');
         let game = new GameService(engine, socket);
 
         let BlankStage = function (game) {
@@ -111,12 +112,8 @@ window.chooseRegion = function (region) {
                 engine.load.image('blue_star', '/images/blue_star.png');
                 engine.load.image('taken_flag', '/images/taken_flag.png');
 
-                skins.forEach(skin => {
-                    engine.load.image(skin, '/images/skins/' + skin + '.png');
-                });
-
                 engine.load.spritesheet('explosion', '/images/explosion.png', 128, 128);
-                //engine.load.image('doge', '/images/doge.jpg');
+                engine.load.spritesheet('skins', '/images/skins.png', 80, 80);
             },
 
             create: function () {
@@ -257,6 +254,10 @@ window.chooseRegion = function (region) {
                         game.onDropFlag(data);
                     });
 
+                    socket.on('pong', function (data) {
+                        game.onPong(data);
+                    });
+
                     socket.on('disconnect', function () {
                         if (window.switchingRegion) {
                             jQuery('#home').fadeIn();
@@ -285,6 +286,9 @@ window.chooseRegion = function (region) {
             update: function () {
                 // emit the player input
 
+                game.ping_time = (new Date()).getTime();
+                socket.emit('game-ping');
+
                 //move the player when the player is made
                 if (game.properties.in_game) {
 
@@ -292,13 +296,59 @@ window.chooseRegion = function (region) {
                     //the server.
                     let pointer = engine.input.activePointer;
 
+                    let ts = Date.now();
+
                     //Send a new position data to the server
                     socket.emit('move-pointer', {
                         pointer_x: pointer.x,
                         pointer_y: pointer.y,
                         pointer_worldx: pointer.worldX,
                         pointer_worldy: pointer.worldY,
+                        ts: ts
                     });
+
+                    // let newPointer = {
+                    //     x: pointer.worldX,
+                    //     y: pointer.worldY,
+                    //     worldX: pointer.worldX,
+                    //     worldY: pointer.worldY,
+                    //     ts: ts
+                    // };
+                    //
+                    // if (player) {
+                    //     let PositionService = require('./PositionService.js');
+                    //
+                    //     if (PositionService.distanceToPointer(player.player, newPointer) <= 30) {
+                    //         player.rotation = PositionService.moveToPointer(player.player, 0, newPointer, 100);
+                    //     } else {
+                    //         player.rotation = PositionService.moveToPointer(player.player, player.speed - game.latency, newPointer);
+                    //     }
+                    //
+                    //     if (player.player.body.x <= (1000 + player.initial_size + (player.shield / 2))) {
+                    //         player.player.body.x = 1000 + player.initial_size + (player.shield / 2);
+                    //     }
+                    //
+                    //     if (player.player.body.y <= (1000 + player.initial_size + (player.shield / 2))) {
+                    //         player.player.body.y = 1000 + player.initial_size + (player.shield / 2);
+                    //     }
+                    //
+                    //     if (player.player.body.x >= (game.properties.server_height - (player.initial_size + (player.shield / 2)))) {
+                    //         player.player.body.x = game.properties.server_height - (player.initial_size + (player.shield / 2));
+                    //     }
+                    //
+                    //     if (player.player.body.y >= (game.properties.server_width - (player.initial_size + (player.shield / 2)))) {
+                    //         player.player.body.y = game.properties.server_width - (player.initial_size + (player.shield / 2));
+                    //     }
+                    //
+                    //     newPointer.player_x = player.player.body.x;
+                    //     newPointer.player_y = player.player.body.y;
+                    //
+                    //     // add the move to a history of most recent 30 moves
+                    //     game.last_moves.push(newPointer);
+                    //     while (game.last_moves.length > 30) {
+                    //         game.last_moves.shift()
+                    //     }
+                    // }
 
                     if (player) {
                         player.updateTextPos();
@@ -430,8 +480,8 @@ window.chooseRegion = function (region) {
                 engine.state.start('MainStage', true);
             }
 
-            gameElement.find('canvas').attr('width', (window.innerWidth * window.devicePixelRatio))
-                .attr('height', (window.innerHeight * window.devicePixelRatio));
+            gameElement.find('canvas').attr('width', (window.innerWidth))
+                .attr('height', (window.innerHeight));
         };
 
         jQuery(document).on('click', '#play-button', function () {
@@ -453,8 +503,8 @@ window.chooseRegion = function (region) {
                 window.startGame();
             }
 
-            ga('set', 'page', '/playing');
-            ga('send', 'pageview');
+            //ga('set', 'page', '/playing');
+            //ga('send', 'pageview');
         });
 
         jQuery(document).on('click', '.play-again-button', function () {
@@ -467,8 +517,8 @@ window.chooseRegion = function (region) {
                 aipDisplayTag.refresh('xplo-io_300x250');
             });
 
-            ga('set', 'page', '/');
-            ga('send', 'pageview');
+            //ga('set', 'page', '/');
+            //ga('send', 'pageview');
         });
 
         jQuery(document).on('click', '#reconnect', function () {

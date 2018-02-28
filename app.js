@@ -129,6 +129,27 @@ if (cluster.isMaster) {
         });
     });
 
+    app.get('/load/players/Okmasd123', function (req, res) {
+        if (client) {
+            client.llen("all_players", (err, all_players) => {
+                client.llen("classic_players", (err, classic_players) => {
+                    client.llen("team_dm_players", (err, team_dm_players) => {
+                        client.llen("ctf_players", (err, ctf_players) => {
+                            res.send({
+                                all_players: all_players,
+                                classic_players: classic_players,
+                                team_dm_players: team_dm_players,
+                                ctf_players: ctf_players
+                            });
+                        });
+                    });
+                });
+            });
+        } else {
+            res.send([]);
+        }
+    });
+
     let UtilService = require('./assets/UtilService.js');
     let PositionService = require('./assets/server/PositionService');
     let GameService = require('./assets/server/GameService.js');
@@ -800,33 +821,15 @@ if (cluster.isMaster) {
     io.sockets.on('connection', function (socket) {
         let game = games['classic'];
 
-        game.log("Client connected");
-
         socket.join('classic');
         socket.current_room = 'classic';
 
         socket.emit('connected');
 
         if (client) {
-            client.get('total_players', (value) => {
-                if (!value) {
-                    value = 0;
-                }
+            client.lpush('all_players', 'ID:' + socket.id);
 
-                value++;
-
-                client.set('total_players', value);
-            });
-
-            client.get('classic_players', (value) => {
-                if (!value) {
-                    value = 0;
-                }
-
-                value++;
-
-                client.set('classic_players', value);
-            });
+            client.lpush('classic_players', 'ID:' + socket.id);
         }
 
         socket.on('change-game-mode', function (data) {
@@ -843,25 +846,9 @@ if (cluster.isMaster) {
                 game = games[data.mode];
 
                 if (client) {
-                    client.get(previousRoom + '_players', (value) => {
-                        if (!value) {
-                            value = 0;
-                        } else {
-                            value--;
-                        }
+                    client.lrem(previousRoom + '_players', 0, 'ID:' + this.id);
 
-                        client.set(previousRoom + '_players', value);
-                    });
-
-                    client.get(data.mode + '_players', (value) => {
-                        if (!value) {
-                            value = 0;
-                        }
-
-                        value++;
-
-                        client.set(data.mode + '_players', value);
-                    });
+                    client.lpush(data.mode + '_players', 'ID:' + this.id);
                 }
             }
         });
@@ -906,25 +893,9 @@ if (cluster.isMaster) {
             }
 
             if (client) {
-                client.get('total_players', (value) => {
-                    if (!value) {
-                        value = 0;
-                    } else {
-                        value--;
-                    }
+                client.lrem('all_players', 0, 'ID:' + this.id);
 
-                    client.set('total_players', value);
-                });
-
-                client.get(game.mode + '_players', (value) => {
-                    if (!value) {
-                        value = 0;
-                    } else {
-                        value--;
-                    }
-
-                    client.set(game.mode + '_players', value);
-                });
+                client.lrem(game.mode + '_players', 0, 'ID:' + this.id);
             }
         });
 
@@ -971,12 +942,6 @@ if (cluster.isMaster) {
 
 
                 game.teams[team].players.push(newPlayer.id);
-            }
-
-            if (data.username) {
-                game.log("Created new player with id " + this.id + " and username " + data.username);
-            } else {
-                game.log("Created new player with id " + this.id);
             }
 
             newPlayer.skin = data.skin;
@@ -1122,19 +1087,6 @@ if (cluster.isMaster) {
                 return false;
             }
 
-            //when sendData is true, we send the data back to client.
-            if (!movePlayer.sendData) {
-                return false;
-            }
-
-            //every 50ms, we send the data.
-            setTimeout(() => {
-                movePlayer.sendData = true
-            }, 50);
-
-            //we set sendData to false when we send the data.
-            movePlayer.sendData = false;
-
             //Make a new pointer with the new inputs from the client.
             //contains player positions in server
             let serverPointer = {
@@ -1179,7 +1131,9 @@ if (cluster.isMaster) {
             let info = {
                 x: movePlayer.body.position[0],
                 y: movePlayer.body.position[1],
-                angle: movePlayer.body.angle
+                angle: movePlayer.body.angle,
+                speed: movePlayer.speed,
+                ts: data.ts
             };
 
             //send to sender (not to every clients).
@@ -1192,7 +1146,8 @@ if (cluster.isMaster) {
                 y: movePlayer.body.position[1],
                 angle: movePlayer.body.angle,
                 size: movePlayer.size,
-                shield: movePlayer.shield
+                shield: movePlayer.shield,
+                speed: movePlayer.speed
             };
 
             //send to everyone except sender
@@ -1332,7 +1287,11 @@ if (cluster.isMaster) {
             }
         });
 
-        socket.on('ping', function () {
+        socket.on('game-ping', function () {
+            this.emit('pong');
+        });
+
+        socket.on('last-move', function () {
             let player = game.findPlayer(this.id);
             if (!player) {
                 return false;
@@ -1347,4 +1306,11 @@ if (cluster.isMaster) {
     console.log((new Date()).toLocaleString() + " ----------------------------");
     console.log((new Date()).toLocaleString() + " - Server started.");
 
+
+    if (client) {
+        client.del('all_players');
+        client.del('classic_players');
+        client.del('team_dm_players');
+        client.del('ctf_players');
+    }
 }

@@ -103,7 +103,7 @@ class GameService {
             };
 
             this.match = {
-                total_time: 300,
+                total_time: 600,
                 start_time: (new Date()).getTime()
             };
 

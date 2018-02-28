@@ -125,11 +125,9 @@ class RemotePlayer {
     }
 
     createLeader(game) {
-        if (!this.map) {
-            return false;
+        if (this.map) {
+            this.map.destroy();
         }
-
-        this.map.destroy();
 
         if (game.map_group) {
             this.map = game.engine.add.graphics(0, 0, game.map_group);
