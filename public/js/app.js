@@ -16308,6 +16308,7 @@ var customParser = __webpack_require__(125);
 
 var UtilService = __webpack_require__(130);
 var GameService = __webpack_require__(131);
+var PositionService = __webpack_require__(132);
 
 window.chooseRegion = function (region) {
     jQuery('#choose-region').hide();
@@ -16433,8 +16434,8 @@ window.chooseRegion = function (region) {
                     });
 
                     //when the player receives the new input
-                    socket.on('input-received', function (data) {
-                        game.onInputReceived(data);
+                    socket.on('update-state', function (data) {
+                        game.onUpdateState(data);
                     });
 
                     //when the player gets killed
@@ -16572,66 +16573,29 @@ window.chooseRegion = function (region) {
 
                 //move the player when the player is made
                 if (game.properties.in_game) {
-
                     //we're making a new mouse pointer and sending this input to
                     //the server.
                     var pointer = engine.input.activePointer;
 
-                    var ts = Date.now();
-
-                    //Send a new position data to the server
-                    socket.emit('move-pointer', {
-                        pointer_x: pointer.x,
-                        pointer_y: pointer.y,
-                        pointer_worldx: pointer.worldX,
-                        pointer_worldy: pointer.worldY,
-                        ts: ts
-                    });
-
-                    var newPointer = {
-                        x: pointer.worldX,
-                        y: pointer.worldY,
-                        worldX: pointer.worldX,
-                        worldY: pointer.worldY,
-                        ts: ts
-                    };
-
                     if (player) {
-                        // let PositionService = require('./PositionService.js');
-                        //
-                        // if (PositionService.distanceToPointer(player.player, newPointer) <= 30) {
-                        //     player.rotation = PositionService.moveToPointer(player.player, 0, newPointer, 100);
-                        // } else {
-                        //     player.rotation = PositionService.moveToPointer(player.player, player.speed - game.latency, newPointer);
-                        // }
-                        //
-                        // if (player.player.body.x <= (1000 + player.initial_size + (player.shield / 2))) {
-                        //     player.player.body.x = 1000 + player.initial_size + (player.shield / 2);
-                        // }
-                        //
-                        // if (player.player.body.y <= (1000 + player.initial_size + (player.shield / 2))) {
-                        //     player.player.body.y = 1000 + player.initial_size + (player.shield / 2);
-                        // }
-                        //
-                        // if (player.player.body.x >= (game.properties.server_height - (player.initial_size + (player.shield / 2)))) {
-                        //     player.player.body.x = game.properties.server_height - (player.initial_size + (player.shield / 2));
-                        // }
-                        //
-                        // if (player.player.body.y >= (game.properties.server_width - (player.initial_size + (player.shield / 2)))) {
-                        //     player.player.body.y = game.properties.server_width - (player.initial_size + (player.shield / 2));
-                        // }
-                        //
-                        // newPointer.player_x = player.player.body.x;
-                        // newPointer.player_y = player.player.body.y;
-                        //
-                        // // add the move to a history of most recent 30 moves
-                        // game.last_moves.push(newPointer);
-                        // while (game.last_moves.length > 30) {
-                        //     game.last_moves.shift()
-                        // }
-                    }
+                        if (typeof player.pointer_x === 'undefined') {
+                            player.pointer_x = 0;
+                            player.pointer_y = 0;
+                        }
 
-                    if (player) {
+                        if (player.pointer_x !== pointer.screenX || player.pointer_y !== pointer.screenY || player.pointer_x !== pointer.screenX && player.pointer_y !== pointer.screenY) {
+                            player.pointer_x = pointer.screenX;
+                            player.pointer_y = pointer.screenY;
+
+                            //Send a new position data to the server
+                            socket.emit('move-pointer', {
+                                pointer_x: pointer.x,
+                                pointer_y: pointer.y,
+                                pointer_worldx: pointer.worldX,
+                                pointer_worldy: pointer.worldY
+                            });
+                        }
+
                         player.updateTextPos();
                     }
 
@@ -28381,6 +28345,7 @@ var GameService = function () {
         this.mine_box = null;
         this.grenade_box = null;
         this.rank_box = null;
+        this.ping_box = null;
 
         this.buffs = {
             shield_increase: null,
@@ -28411,6 +28376,9 @@ var GameService = function () {
         };
 
         this.last_moves = [];
+
+        this.latency = 0;
+        this.latency_iteration = 0;
     }
 
     _createClass(GameService, [{
@@ -28436,7 +28404,7 @@ var GameService = function () {
             this.map_group = this.engine.add.group();
 
             this.map_group.fixedToCamera = true;
-            this.map_group.cameraOffset.setTo(window.innerWidth * window.devicePixelRatio - 220, window.innerHeight * window.devicePixelRatio - 220);
+            this.map_group.cameraOffset.setTo(window.innerWidth - 220, window.innerHeight - 220);
 
             var map = this.engine.add.graphics(0, 0, this.map_group);
 
@@ -28662,7 +28630,7 @@ var GameService = function () {
                 //Create rank box
                 this.rank_box = this.engine.add.group();
                 this.rank_box.fixedToCamera = true;
-                this.rank_box.cameraOffset.setTo(20, window.innerHeight * window.devicePixelRatio - 60);
+                this.rank_box.cameraOffset.setTo(20, window.innerHeight - 60);
 
                 var rankBox = this.engine.add.graphics(0, 0, this.rank_box);
                 rankBox.beginFill(0x000000);
@@ -28678,6 +28646,25 @@ var GameService = function () {
                 this.rank_box.text.boundsAlignV = 'middle';
                 this.rank_box.text.boundsAlignH = 'left';
 
+                //Create ping box
+                this.ping_box = this.engine.add.group();
+                this.ping_box.fixedToCamera = true;
+                this.ping_box.cameraOffset.setTo(160, window.innerHeight - 60);
+
+                var pingBox = this.engine.add.graphics(0, 0, this.ping_box);
+                pingBox.beginFill(0x000000);
+                pingBox.drawRoundedRect(0, 0, 120, 40, 5);
+                pingBox.alpha = 0.5;
+
+                this.ping_box.text = this.engine.add.text(0, 0, 'Latency: 0', {
+                    font: "15px Arial",
+                    fill: "#ffffff",
+                    align: "center"
+                }, this.ping_box);
+                this.ping_box.text.setTextBounds(10, 5, 120, 40);
+                this.ping_box.text.boundsAlignV = 'middle';
+                this.ping_box.text.boundsAlignH = 'left';
+
                 this.createLeaderboard(data);
 
                 this.createMiniMap();
@@ -28686,7 +28673,7 @@ var GameService = function () {
                     //Create red score
                     this.red_score = this.engine.add.group();
                     this.red_score.fixedToCamera = true;
-                    this.red_score.cameraOffset.setTo(window.innerWidth * window.devicePixelRatio / 2 - 125, 20);
+                    this.red_score.cameraOffset.setTo(window.innerWidth / 2 - 125, 20);
 
                     var redScore = this.engine.add.graphics(0, 0, this.red_score);
                     redScore.beginFill(0xbe0000);
@@ -28705,7 +28692,7 @@ var GameService = function () {
                     //Create match timer
                     this.match_time = this.engine.add.group();
                     this.match_time.fixedToCamera = true;
-                    this.match_time.cameraOffset.setTo(window.innerWidth * window.devicePixelRatio / 2 - 35, 20);
+                    this.match_time.cameraOffset.setTo(window.innerWidth / 2 - 35, 20);
 
                     var matchTime = this.engine.add.graphics(0, 0, this.match_time);
                     matchTime.beginFill(0x000000);
@@ -28724,7 +28711,7 @@ var GameService = function () {
                     //Create blue score
                     this.blue_score = this.engine.add.group();
                     this.blue_score.fixedToCamera = true;
-                    this.blue_score.cameraOffset.setTo(window.innerWidth * window.devicePixelRatio / 2 + 55, 20);
+                    this.blue_score.cameraOffset.setTo(window.innerWidth / 2 + 55, 20);
 
                     var blueScore = this.engine.add.graphics(0, 0, this.blue_score);
                     blueScore.beginFill(0x0000FF);
@@ -28813,6 +28800,16 @@ var GameService = function () {
         key: 'onPong',
         value: function onPong() {
             this.latency = new Date().getTime() - this.ping_time;
+
+            if (this.latency_iteration >= 120) {
+                if (this.ping_box) {
+                    this.ping_box.text.setText('Latency: ' + this.latency);
+                }
+
+                this.latency_iteration = 0;
+            }
+
+            this.latency_iteration++;
         }
     }, {
         key: 'createLeaderboard',
@@ -29155,42 +29152,52 @@ var GameService = function () {
             }
         }
     }, {
-        key: 'onInputReceived',
-        value: function onInputReceived(data) {
+        key: 'onUpdateState',
+        value: function onUpdateState(data) {
+            var _this2 = this;
 
-            //we're forming a new pointer with the new position
-            var newPointer = {
-                x: data.x,
-                y: data.y,
-                worldX: data.x,
-                worldY: data.y
-            };
+            data.forEach(function (remotePlayer) {
+                var localPlayer = null;
+                if (remotePlayer.id === player.id) {
+                    localPlayer = player;
+                } else {
+                    localPlayer = _this2.findPlayer(remotePlayer.id);
+                }
 
-            var distance = PositionService.distanceToPointer(player.player, newPointer);
-            var speed = distance / 0.06;
+                //we're forming a new pointer with the new position
+                var newPointer = {
+                    x: remotePlayer.x,
+                    y: remotePlayer.y,
+                    worldX: remotePlayer.x,
+                    worldY: remotePlayer.y
+                };
 
-            player.rotation = PositionService.moveToPointer(player.player, speed, newPointer);
+                var distance = PositionService.distanceToPointer(localPlayer.player, newPointer);
+                var speed = distance / 0.05;
 
-            if (this.map_group) {
-                player.map.x = player.player.x / (this.properties.server_width / 220) - 20;
-                player.map.y = player.player.y / (this.properties.server_height / 220) - 20;
-            }
-        }
-    }, {
-        key: 'onGained',
-        value: function onGained(data) {
-            player.shield = data.new_shield;
+                localPlayer.rotation = PositionService.moveToPointer(localPlayer.player, speed, newPointer);
 
-            player.player.graphicsData[0].lineWidth = data.new_shield;
+                if (_this2.map_group) {
+                    localPlayer.map.x = localPlayer.player.x / (_this2.properties.server_width / 220) - 20;
+                    localPlayer.map.y = localPlayer.player.y / (_this2.properties.server_height / 220) - 20;
+                }
 
-            //create new body
-            player.player.body.clearShapes();
-            player.player.body.addCircle(player.body_size + player.shield / 2, 0, 0);
-            player.player.body.data.shapes[0].sensor = true;
+                if (remotePlayer.shield !== localPlayer.shield) {
+                    localPlayer.size = remotePlayer.size;
+                    localPlayer.shield = remotePlayer.shield;
 
-            var percent = (data.new_shield - 10) * 100 / (player.max_shield - 10);
+                    localPlayer.player.graphicsData[0].lineWidth = remotePlayer.shield;
 
-            this.shield_box.text.setText(Math.round(percent) + '%');
+                    localPlayer.player.body.clearShapes();
+                    localPlayer.player.body.addCircle(localPlayer.size + localPlayer.shield / 2, 0, 0);
+                    localPlayer.player.body.data.shapes[0].sensor = true;
+
+                    if (remotePlayer.id === player.id) {
+                        var percent = (localPlayer.shield - 10) * 100 / (player.max_shield - 10);
+                        _this2.shield_box.text.setText(Math.round(percent) + '%');
+                    }
+                }
+            });
         }
     }, {
         key: 'onExplosion',
@@ -29229,12 +29236,6 @@ var GameService = function () {
             } else {
                 this.grenade_list.splice(this.grenade_list.indexOf(object), 1);
             }
-
-            if (typeof data.user_id !== 'undefined') {
-                if (data.user_id === player.id) {
-                    this.onGained(data);
-                }
-            }
         }
     }, {
         key: 'onMinePickedUp',
@@ -29253,14 +29254,14 @@ var GameService = function () {
     }, {
         key: 'onMineUpdate',
         value: function onMineUpdate(data) {
-            var _this2 = this;
+            var _this3 = this;
 
             if (!this.properties.in_game) {
                 return false;
             }
 
             data.forEach(function (mine) {
-                _this2.mine_list.push(new MineObject(mine.id, mine.x, mine.y, mine.color, mine.size, mine.line_size, mine.user_id, _this2.engine));
+                _this3.mine_list.push(new MineObject(mine.id, mine.x, mine.y, mine.color, mine.size, mine.line_size, mine.user_id, _this3.engine));
             });
         }
     }, {
@@ -29285,14 +29286,14 @@ var GameService = function () {
     }, {
         key: 'onGrenadeUpdate',
         value: function onGrenadeUpdate(data) {
-            var _this3 = this;
+            var _this4 = this;
 
             if (!this.properties.in_game) {
                 return false;
             }
 
             data.forEach(function (grenade) {
-                _this3.grenade_list.push(new GrenadeObject(grenade.id, grenade.x, grenade.y, grenade.color, grenade.size, grenade.line_size, grenade.user_id, _this3.engine));
+                _this4.grenade_list.push(new GrenadeObject(grenade.id, grenade.x, grenade.y, grenade.color, grenade.size, grenade.line_size, grenade.user_id, _this4.engine));
             });
         }
     }, {
@@ -29319,19 +29320,6 @@ var GameService = function () {
     }, {
         key: 'onItemUpdate',
         value: function onItemUpdate(data) {
-            var _this4 = this;
-
-            if (!this.properties.in_game) {
-                return false;
-            }
-
-            data.forEach(function (item) {
-                _this4.food_list.push(new FoodObject(item.id, item.type, item.x, item.y, item.color, item.size, item.line_size, _this4));
-            });
-        }
-    }, {
-        key: 'onBuffUpdate',
-        value: function onBuffUpdate(data) {
             var _this5 = this;
 
             if (!this.properties.in_game) {
@@ -29339,7 +29327,20 @@ var GameService = function () {
             }
 
             data.forEach(function (item) {
-                _this5.buff_list.push(new BuffObject(item.id, item.type, item.x, item.y, item.color, item.size, item.line_size, _this5));
+                _this5.food_list.push(new FoodObject(item.id, item.type, item.x, item.y, item.color, item.size, item.line_size, _this5));
+            });
+        }
+    }, {
+        key: 'onBuffUpdate',
+        value: function onBuffUpdate(data) {
+            var _this6 = this;
+
+            if (!this.properties.in_game) {
+                return false;
+            }
+
+            data.forEach(function (item) {
+                _this6.buff_list.push(new BuffObject(item.id, item.type, item.x, item.y, item.color, item.size, item.line_size, _this6));
             });
         }
     }, {
@@ -29417,7 +29418,7 @@ var GameService = function () {
     }, {
         key: 'onGetLeaderboard',
         value: function onGetLeaderboard(data) {
-            var _this6 = this;
+            var _this7 = this;
 
             if (!this.properties.in_game) {
                 return false;
@@ -29433,8 +29434,8 @@ var GameService = function () {
                     leader.username = leader.username.substring(0, 17) + '...';
                 }
 
-                _this6.leaderboard['line_' + (key + 1) + '_left'].setText(key + 1 + ': ' + leader.username);
-                _this6.leaderboard['line_' + (key + 1) + '_right'].setText(leader.score);
+                _this7.leaderboard['line_' + (key + 1) + '_left'].setText(key + 1 + ': ' + leader.username);
+                _this7.leaderboard['line_' + (key + 1) + '_right'].setText(leader.score);
             });
 
             this.rank_box.text.setText('Score: ' + data.score);
@@ -29442,7 +29443,7 @@ var GameService = function () {
     }, {
         key: 'onChangeLeader',
         value: function onChangeLeader(data) {
-            var _this7 = this;
+            var _this8 = this;
 
             if (window.gameMode === 'ctf') {
                 return false;
@@ -29452,16 +29453,16 @@ var GameService = function () {
                 player.createLeader(this);
 
                 this.enemies.forEach(function (enemy) {
-                    enemy.resetMap(_this7);
+                    enemy.resetMap(_this8);
                 });
             } else {
                 player.resetMap();
 
                 this.enemies.forEach(function (enemy) {
                     if (enemy.id === data.id) {
-                        enemy.createLeader(_this7);
+                        enemy.createLeader(_this8);
                     } else {
-                        enemy.resetMap(_this7);
+                        enemy.resetMap(_this8);
                     }
                 });
             }
@@ -29494,7 +29495,7 @@ var GameService = function () {
     }, {
         key: 'onFlagPickup',
         value: function onFlagPickup(data) {
-            var _this8 = this;
+            var _this9 = this;
 
             this[data.team + '_flag'].hide();
 
@@ -29504,14 +29505,14 @@ var GameService = function () {
 
             this.enemies.forEach(function (enemy) {
                 if (enemy.id === data.user_id) {
-                    enemy.addFlag(_this8);
+                    enemy.addFlag(_this9);
                 }
             });
         }
     }, {
         key: 'onResetFlag',
         value: function onResetFlag(data) {
-            var _this9 = this;
+            var _this10 = this;
 
             this[data.team + '_flag'].x = data.x;
             this[data.team + '_flag'].x = data.x;
@@ -29533,7 +29534,7 @@ var GameService = function () {
 
             this.enemies.forEach(function (enemy) {
                 if (enemy.team === team) {
-                    enemy.removeFlag(_this9);
+                    enemy.removeFlag(_this10);
                 }
             });
         }
@@ -29552,7 +29553,7 @@ var GameService = function () {
     }, {
         key: 'onKilled',
         value: function onKilled(data) {
-            var _this10 = this;
+            var _this11 = this;
 
             if (player) {
                 player.text.destroy();
@@ -29568,9 +29569,9 @@ var GameService = function () {
                 deadBlock.find('.time').text(formatted);
 
                 setTimeout(function () {
-                    _this10.restart();
+                    _this11.restart();
 
-                    _this10.engine.state.start('BlankStage', true);
+                    _this11.engine.state.start('BlankStage', true);
 
                     jQuery('#play-button').show();
                     jQuery('#loading-button').hide();
@@ -29946,15 +29947,7 @@ var Player = function () {
         this.player.body.addCircle(this.body_size + this.shield / 2, 0, 0);
         this.player.body.data.shapes[0].sensor = true;
 
-        // this.player.body.onBeginContact.add((body, bodyB, shapeA, shapeB, equation) => {
-        //     let key = body.sprite.id;
-        //     let type = body.sprite.type;
-        //
-        //     if (type !== 'player_body') {
-        //         body.sprite.visible = false;
-        //     }
-        // }, this);
-
+        this.debugPlayer = false;
         // this.debugPlayer = game.engine.add.graphics(data.x, data.y);
         //
         // // set a fill and line style
@@ -30097,6 +30090,7 @@ var RemotePlayer = function () {
         this.player.type = "player_body";
         this.player.id = this.id;
         this.player.shield = shield;
+        this.shield = shield;
 
         this.god_mode = null;
         if (is_god) {

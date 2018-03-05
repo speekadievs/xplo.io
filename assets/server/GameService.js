@@ -174,21 +174,11 @@ class GameService {
 
                                 this.resizable_bodies.push(player.id);
 
-                                socket.emit("gained", {
-                                    new_size: player.size,
-                                    new_shield: player.shield
-                                });
-
                             } else if (buff.type === 'shield_decrease') {
                                 player.shield = player.old_decrease_shield;
                                 player.old_decrease_shield = false;
 
                                 this.resizable_bodies.push(player.id);
-
-                                socket.emit("gained", {
-                                    new_size: player.size,
-                                    new_shield: player.shield
-                                });
                             } else if (buff.type === 'speed_increase' || buff.type === 'speed_decrease') {
                                 player.speed = this.properties.player_speed;
                             }
@@ -230,6 +220,44 @@ class GameService {
 
             this.removable_bodies = [];
         }
+
+        let players = [];
+        this.player_list.forEach(player => {
+            let x = player.body.position[0];
+            let y = player.body.position[1];
+
+            let radius = player.size + (player.shield / 2);
+
+            if (x <= (1000 + radius)) {
+                player.body.position[0] = 1000 + radius;
+            }
+
+            if (y <= (1000 + radius)) {
+                player.body.position[1] = 1000 + radius;
+            }
+
+            if (x >= (this.properties.height - radius)) {
+                player.body.position[0] = this.properties.height - radius;
+            }
+
+            if (y >= (this.properties.width - radius)) {
+                player.body.position[1] = this.properties.width - radius;
+            }
+
+            player.x = player.body.position[0];
+            player.y = player.body.position[1];
+
+            players.push({
+                id: player.id,
+                x: !isNaN(player.body.position[0]) ? player.body.position[0] : 0,
+                y: !isNaN(player.body.position[1]) ? player.body.position[1] : 0,
+                speed: player.speed,
+                shield: player.shield,
+                size: player.size
+            });
+        });
+
+        this.io.to(this.mode).emit('update-state', players);
 
         if (this.moving_grenades.length > 0) {
             let removableGrenades = [];
