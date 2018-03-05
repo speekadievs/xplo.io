@@ -35,7 +35,7 @@ window.chooseRegion = function (region) {
 
     let socket;
 
-    if (window.location.href.indexOf('staging.xplo.io') !== -1) {
+    if (window.location.href.indexOf('staging') !== -1) {
         socket = io({
             transports: ['websocket'],
             parser: customParser,
