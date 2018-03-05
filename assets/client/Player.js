@@ -80,14 +80,14 @@ class Player {
         //     }
         // }, this);
 
-        this.debugPlayer = game.engine.add.graphics(data.x, data.y);
-
-        // set a fill and line style
-        this.debugPlayer.beginFill(0xff0000);
-        this.debugPlayer.lineStyle(data.shield, data.color, 0.5);
-        this.debugPlayer.drawCircle(0, 0, this.radius * 2);
-        this.debugPlayer.endFill();
-        this.debugPlayer.anchor.setTo(0.5, 0.5);
+        // this.debugPlayer = game.engine.add.graphics(data.x, data.y);
+        //
+        // // set a fill and line style
+        // this.debugPlayer.beginFill(0xff0000);
+        // this.debugPlayer.lineStyle(data.shield, data.color, 0.5);
+        // this.debugPlayer.drawCircle(0, 0, this.radius * 2);
+        // this.debugPlayer.endFill();
+        // this.debugPlayer.anchor.setTo(0.5, 0.5);
     }
 
     updateTextPos() {

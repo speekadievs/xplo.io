@@ -1087,6 +1087,19 @@ if (cluster.isMaster) {
                 return false;
             }
 
+            //when sendData is true, we send the data back to client.
+            if (!movePlayer.sendData) {
+                return false;
+            }
+
+            //every 50ms, we send the data.
+            setTimeout(() => {
+                movePlayer.sendData = true
+            }, 50);
+
+            //we set sendData to false when we send the data.
+            movePlayer.sendData = false;
+
             //Make a new pointer with the new inputs from the client.
             //contains player positions in server
             let serverPointer = {

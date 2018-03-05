@@ -5,7 +5,7 @@ window.moment = require('moment');
 
 let skinModal = jQuery('#skins');
 skins.forEach(skin => {
-    skinModal.find('.modal-body').append('<div class="skin-container"><a href="#" data-id="' + skin + '" class="skin"><img src="/images/skins/' + skin + '.png"</a></div>');
+    skinModal.find('.modal-body').append('<div class="skin-container"><a href="#" data-id="' + skin + '" class="skin"><i class="sprite sprite-'+skin+'"></i></a></div>');
 });
 
 // Do some front-end stuff
@@ -316,38 +316,38 @@ window.chooseRegion = function (region) {
                     };
 
                     if (player) {
-                        let PositionService = require('./PositionService.js');
-
-                        if (PositionService.distanceToPointer(player.player, newPointer) <= 30) {
-                            player.rotation = PositionService.moveToPointer(player.player, 0, newPointer, 100);
-                        } else {
-                            player.rotation = PositionService.moveToPointer(player.player, player.speed - game.latency, newPointer);
-                        }
-
-                        if (player.player.body.x <= (1000 + player.initial_size + (player.shield / 2))) {
-                            player.player.body.x = 1000 + player.initial_size + (player.shield / 2);
-                        }
-
-                        if (player.player.body.y <= (1000 + player.initial_size + (player.shield / 2))) {
-                            player.player.body.y = 1000 + player.initial_size + (player.shield / 2);
-                        }
-
-                        if (player.player.body.x >= (game.properties.server_height - (player.initial_size + (player.shield / 2)))) {
-                            player.player.body.x = game.properties.server_height - (player.initial_size + (player.shield / 2));
-                        }
-
-                        if (player.player.body.y >= (game.properties.server_width - (player.initial_size + (player.shield / 2)))) {
-                            player.player.body.y = game.properties.server_width - (player.initial_size + (player.shield / 2));
-                        }
-
-                        newPointer.player_x = player.player.body.x;
-                        newPointer.player_y = player.player.body.y;
-
-                        // add the move to a history of most recent 30 moves
-                        game.last_moves.push(newPointer);
-                        while (game.last_moves.length > 30) {
-                            game.last_moves.shift()
-                        }
+                        // let PositionService = require('./PositionService.js');
+                        //
+                        // if (PositionService.distanceToPointer(player.player, newPointer) <= 30) {
+                        //     player.rotation = PositionService.moveToPointer(player.player, 0, newPointer, 100);
+                        // } else {
+                        //     player.rotation = PositionService.moveToPointer(player.player, player.speed - game.latency, newPointer);
+                        // }
+                        //
+                        // if (player.player.body.x <= (1000 + player.initial_size + (player.shield / 2))) {
+                        //     player.player.body.x = 1000 + player.initial_size + (player.shield / 2);
+                        // }
+                        //
+                        // if (player.player.body.y <= (1000 + player.initial_size + (player.shield / 2))) {
+                        //     player.player.body.y = 1000 + player.initial_size + (player.shield / 2);
+                        // }
+                        //
+                        // if (player.player.body.x >= (game.properties.server_height - (player.initial_size + (player.shield / 2)))) {
+                        //     player.player.body.x = game.properties.server_height - (player.initial_size + (player.shield / 2));
+                        // }
+                        //
+                        // if (player.player.body.y >= (game.properties.server_width - (player.initial_size + (player.shield / 2)))) {
+                        //     player.player.body.y = game.properties.server_width - (player.initial_size + (player.shield / 2));
+                        // }
+                        //
+                        // newPointer.player_x = player.player.body.x;
+                        // newPointer.player_y = player.player.body.y;
+                        //
+                        // // add the move to a history of most recent 30 moves
+                        // game.last_moves.push(newPointer);
+                        // while (game.last_moves.length > 30) {
+                        //     game.last_moves.shift()
+                        // }
                     }
 
                     if (player) {

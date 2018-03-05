@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 121);
+/******/ 	return __webpack_require__(__webpack_require__.s = 120);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -1911,7 +1911,7 @@ function loadLocale(name) {
         try {
             oldLocale = globalLocale._abbr;
             var aliasedRequire = require;
-            __webpack_require__(125)("./" + name);
+            __webpack_require__(124)("./" + name);
             getSetGlobalLocale(oldLocale);
         } catch (e) {}
     }
@@ -4603,7 +4603,7 @@ return hooks;
 
 })));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(124)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(123)(module)))
 
 /***/ }),
 /* 1 */
@@ -16270,125 +16270,11 @@ return zhTw;
 /* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
+module.exports = __webpack_require__(121);
 
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var PositionService = function () {
-    function PositionService() {
-        _classCallCheck(this, PositionService);
-    }
-
-    _createClass(PositionService, null, [{
-        key: "moveToPointer",
-
-
-        /**
-         * @param displayObject
-         * @param speed
-         * @param pointer
-         * @param maxTime
-         * @returns {*|number}
-         */
-        value: function moveToPointer(displayObject, speed, pointer, maxTime) {
-
-            var angle = PositionService.angleToPointer(displayObject, pointer);
-
-            if (maxTime > 0) {
-                //  We know how many pixels we need to move, but how fast?
-                speed = PositionService.distanceToPointer(displayObject, pointer) / (maxTime / 1000);
-            }
-
-            displayObject.body.velocity.x = Math.cos(angle) * speed;
-            displayObject.body.velocity.y = Math.sin(angle) * speed;
-
-            return angle;
-        }
-    }, {
-        key: "moveToPointerPos",
-        value: function moveToPointerPos(displayObject, speed, pointer) {
-            var angle = PositionService.angleToPointerPos(displayObject, pointer);
-
-            displayObject.body.velocity.x = Math.cos(angle) * speed;
-            displayObject.body.velocity.y = Math.sin(angle) * speed;
-
-            return angle;
-        }
-
-        /**
-         * @param displayObject
-         * @param pointer
-         * @param world
-         * @returns {number}
-         */
-
-    }, {
-        key: "distanceToPointer",
-        value: function distanceToPointer(displayObject, pointer, world) {
-
-            if (world === undefined) {
-                world = false;
-            }
-
-            var dx = world ? displayObject.world.x - pointer.worldX : displayObject.x - pointer.worldX;
-            var dy = world ? displayObject.world.y - pointer.worldY : displayObject.y - pointer.worldY;
-
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-
-        /**
-         * @param displayObject
-         * @param pointer
-         * @param world
-         * @returns {number}
-         */
-
-    }, {
-        key: "angleToPointer",
-        value: function angleToPointer(displayObject, pointer, world) {
-
-            if (world === undefined) {
-                world = false;
-            }
-
-            if (world) {
-                return Math.atan2(pointer.worldY - displayObject.world.y, pointer.worldX - displayObject.world.x);
-            }
-
-            return Math.atan2(pointer.worldY - displayObject.y, pointer.worldX - displayObject.x);
-        }
-
-        /**
-         *
-         * @param displayObject
-         * @param pointer
-         * @returns {number}
-         */
-
-    }, {
-        key: "angleToPointerPos",
-        value: function angleToPointerPos(displayObject, pointer) {
-            return Math.atan2(pointer.y - displayObject.y, pointer.x - displayObject.x);
-        }
-    }]);
-
-    return PositionService;
-}();
-
-module.exports = PositionService;
 
 /***/ }),
 /* 121 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(122);
-
-
-/***/ }),
-/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16396,12 +16282,12 @@ module.exports = __webpack_require__(122);
 
 window.skins = ["abkhazia", "afghanistan", "albania", "algeria", "andorra", "angola", "anguilla", "argentina", "armenia", "aruba", "australia", "austria", "azerbaijan", "bahamas", "bahrain", "bangladesh", "barbados", "belarus", "belgium", "belize", "benin", "bermuda", "bhutan-1", "bhutan", "bolivia", "bonaire", "botswana", "brazil", "british-columbia", "british-virgin-islands", "brunei", "bulgaria", "burkina-faso", "burundi", "cambodia", "cameroon", "canada", "canary-islands", "cape-verde", "cayman-islands", "central-african-republic", "chile", "china", "cocos-island", "colombia", "comoros", "cook-islands", "costa-rica", "croatia", "cuba", "curacao", "cyprus", "czech-republic", "denmark", "doge", "dominica", "dominican-republic", "ecuador", "egypt", "england", "estonia", "ethiopia", "european-union", "fiji", "finland", "france", "gabon", "gambia", "georgia", "germany", "ghana", "greece", "greenland", "grenada", "guam", "guatemala", "guernsey", "guinea", "guyana", "haiti", "hawaii", "honduras", "hong-kong", "hungary", "iceland", "india", "indonesia", "iran", "iraq", "ireland", "israel", "italy", "jamaica", "japan", "jersey", "jordan", "kazakhstan", "kenya", "kiribati", "kosovo", "kuwait", "kyrgyzstan", "laos", "latvia", "lebanon", "lesotho", "liberia", "libya", "liechtenstein", "lithuania", "luxembourg", "madagascar", "malaysia", "maldives", "mali", "malta", "martinique", "mauritania", "mauritius", "melilla", "mexico", "micronesia", "moldova", "monaco", "mongolia", "montenegro", "montserrat", "morocco", "mozambique", "myanmar", "namibia", "nato", "nauru", "nepal", "netherlands", "new-zealand", "nicaragua", "niger", "nigeria", "north-korea", "northen-cyprus", "norway", "oman", "ossetia", "pakistan", "palau", "palestine", "panama", "paraguay", "pepe", "peru", "philippines", "pitcairn-islands", "portugal", "puerto-rico", "qatar", "republic-of-macedonia", "republic-of-poland", "republic-of-the-congo", "romania", "russia", "rwanda", "saba-island", "salvador", "samoa", "san-marino", "sardinia", "saudi-arabia", "scotland", "senegal", "serbia", "seychelles", "singapore", "slovakia", "slovenia", "somalia", "somaliland", "south-africa", "south-korea", "south-sudan", "spain", "sudan", "suriname", "swaziland", "sweden", "switzerland", "syria", "taiwan", "tajikistan", "tanzania", "thailand", "tibet", "togo", "tokelau", "tonga", "transnistria", "tunisia", "turkey", "turkmenistan", "tuvalu", "uganda", "ukraine", "united-arab-emirates", "united-kingdom", "united-nations", "united-states-of-america", "uruguay", "uzbekistn", "vanuatu", "vatican-city", "venezuela", "vietnam", "virgin-islands", "wales", "yemen", "zambia", "zimbabwe"];
 
-window.jQuery = __webpack_require__(123);
+window.jQuery = __webpack_require__(122);
 window.moment = __webpack_require__(0);
 
 var skinModal = jQuery('#skins');
 skins.forEach(function (skin) {
-    skinModal.find('.modal-body').append('<div class="skin-container"><a href="#" data-id="' + skin + '" class="skin"><img src="/images/skins/' + skin + '.png"</a></div>');
+    skinModal.find('.modal-body').append('<div class="skin-container"><a href="#" data-id="' + skin + '" class="skin"><i class="sprite sprite-' + skin + '"></i></a></div>');
 });
 
 // Do some front-end stuff
@@ -16418,10 +16304,10 @@ window.playCount = 0;
 window.gameMode = 'classic';
 window.updateCount = 0;
 
-var customParser = __webpack_require__(126);
+var customParser = __webpack_require__(125);
 
-var UtilService = __webpack_require__(131);
-var GameService = __webpack_require__(132);
+var UtilService = __webpack_require__(130);
+var GameService = __webpack_require__(131);
 
 window.chooseRegion = function (region) {
     jQuery('#choose-region').hide();
@@ -16711,38 +16597,38 @@ window.chooseRegion = function (region) {
                     };
 
                     if (player) {
-                        var PositionService = __webpack_require__(120);
-
-                        if (PositionService.distanceToPointer(player.player, newPointer) <= 30) {
-                            player.rotation = PositionService.moveToPointer(player.player, 0, newPointer, 100);
-                        } else {
-                            player.rotation = PositionService.moveToPointer(player.player, player.speed - game.latency, newPointer);
-                        }
-
-                        if (player.player.body.x <= 1000 + player.initial_size + player.shield / 2) {
-                            player.player.body.x = 1000 + player.initial_size + player.shield / 2;
-                        }
-
-                        if (player.player.body.y <= 1000 + player.initial_size + player.shield / 2) {
-                            player.player.body.y = 1000 + player.initial_size + player.shield / 2;
-                        }
-
-                        if (player.player.body.x >= game.properties.server_height - (player.initial_size + player.shield / 2)) {
-                            player.player.body.x = game.properties.server_height - (player.initial_size + player.shield / 2);
-                        }
-
-                        if (player.player.body.y >= game.properties.server_width - (player.initial_size + player.shield / 2)) {
-                            player.player.body.y = game.properties.server_width - (player.initial_size + player.shield / 2);
-                        }
-
-                        newPointer.player_x = player.player.body.x;
-                        newPointer.player_y = player.player.body.y;
-
-                        // add the move to a history of most recent 30 moves
-                        game.last_moves.push(newPointer);
-                        while (game.last_moves.length > 30) {
-                            game.last_moves.shift();
-                        }
+                        // let PositionService = require('./PositionService.js');
+                        //
+                        // if (PositionService.distanceToPointer(player.player, newPointer) <= 30) {
+                        //     player.rotation = PositionService.moveToPointer(player.player, 0, newPointer, 100);
+                        // } else {
+                        //     player.rotation = PositionService.moveToPointer(player.player, player.speed - game.latency, newPointer);
+                        // }
+                        //
+                        // if (player.player.body.x <= (1000 + player.initial_size + (player.shield / 2))) {
+                        //     player.player.body.x = 1000 + player.initial_size + (player.shield / 2);
+                        // }
+                        //
+                        // if (player.player.body.y <= (1000 + player.initial_size + (player.shield / 2))) {
+                        //     player.player.body.y = 1000 + player.initial_size + (player.shield / 2);
+                        // }
+                        //
+                        // if (player.player.body.x >= (game.properties.server_height - (player.initial_size + (player.shield / 2)))) {
+                        //     player.player.body.x = game.properties.server_height - (player.initial_size + (player.shield / 2));
+                        // }
+                        //
+                        // if (player.player.body.y >= (game.properties.server_width - (player.initial_size + (player.shield / 2)))) {
+                        //     player.player.body.y = game.properties.server_width - (player.initial_size + (player.shield / 2));
+                        // }
+                        //
+                        // newPointer.player_x = player.player.body.x;
+                        // newPointer.player_y = player.player.body.y;
+                        //
+                        // // add the move to a history of most recent 30 moves
+                        // game.last_moves.push(newPointer);
+                        // while (game.last_moves.length > 30) {
+                        //     game.last_moves.shift()
+                        // }
                     }
 
                     if (player) {
@@ -16954,7 +16840,7 @@ window.chooseRegion = function (region) {
 };
 
 /***/ }),
-/* 123 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -27214,7 +27100,7 @@ return jQuery;
 
 
 /***/ }),
-/* 124 */
+/* 123 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -27242,7 +27128,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 125 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var map = {
@@ -27499,15 +27385,15 @@ webpackContext.keys = function webpackContextKeys() {
 };
 webpackContext.resolve = webpackContextResolve;
 module.exports = webpackContext;
-webpackContext.id = 125;
+webpackContext.id = 124;
 
 /***/ }),
-/* 126 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var msgpack = __webpack_require__(127);
-var Emitter = __webpack_require__(130);
+var msgpack = __webpack_require__(126);
+var Emitter = __webpack_require__(129);
 
 /**
  * Packet types (see https://github.com/socketio/socket.io-protocol)
@@ -27576,15 +27462,15 @@ exports.Decoder = Decoder;
 
 
 /***/ }),
-/* 127 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports.encode = __webpack_require__(128);
-exports.decode = __webpack_require__(129);
+exports.encode = __webpack_require__(127);
+exports.decode = __webpack_require__(128);
 
 
 /***/ }),
-/* 128 */
+/* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27896,7 +27782,7 @@ module.exports = encode;
 
 
 /***/ }),
-/* 129 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28184,7 +28070,7 @@ module.exports = decode;
 
 
 /***/ }),
-/* 130 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -28353,7 +28239,7 @@ Emitter.prototype.hasListeners = function(event){
 
 
 /***/ }),
-/* 131 */
+/* 130 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28428,7 +28314,7 @@ var UtilService = function () {
 module.exports = UtilService;
 
 /***/ }),
-/* 132 */
+/* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28438,7 +28324,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var PositionService = __webpack_require__(120);
+var PositionService = __webpack_require__(132);
 var Player = __webpack_require__(133);
 var RemotePlayer = __webpack_require__(134);
 var FoodObject = __webpack_require__(135);
@@ -29280,38 +29166,10 @@ var GameService = function () {
                 worldY: data.y
             };
 
-            // if (PositionService.distanceToPointer(player.player, newPointer) >= 50) {
-            //     player.player.body.x = data.x;
-            //     player.player.body.y = data.y;
-            // }
+            var distance = PositionService.distanceToPointer(player.player, newPointer);
+            var speed = distance / 0.06;
 
-            if (player.debugPlayer) {
-                player.debugPlayer.x = data.x;
-                player.debugPlayer.y = data.y;
-            }
-
-            player.rotation = PositionService.moveToPointerPos(player.player, player.speed * 2, {
-                x: data.x,
-                y: data.y
-            });
-
-            // Get the timestamp and player telemetry from the server
-            var serverTS = data.ts;
-
-            // Erase all saved moves timestamped before the received server
-            // telemetry
-            this.last_moves = this.last_moves.filter(function (savedMove) {
-                return savedMove.ts > serverTS;
-            });
-
-            // Calculate a reconciled position using the data from the
-            // server telemetry as a starting point, and then re-applying
-            // the filtered saved moves.
-            this.last_moves.forEach(function (savedMove) {
-                player.rotation = PositionService.moveToPointer(player.player, player.speed, savedMove);
-            });
-
-            player.speed = data.speed;
+            player.rotation = PositionService.moveToPointer(player.player, speed, newPointer);
 
             if (this.map_group) {
                 player.map.x = player.player.x / (this.properties.server_width / 220) - 20;
@@ -29333,10 +29191,6 @@ var GameService = function () {
             var percent = (data.new_shield - 10) * 100 / (player.max_shield - 10);
 
             this.shield_box.text.setText(Math.round(percent) + '%');
-
-            if (player.debugPlayer) {
-                player.debugPlayer.graphicsData[0].lineWidth = data.new_shield;
-            }
         }
     }, {
         key: 'onExplosion',
@@ -29893,6 +29747,120 @@ var GameService = function () {
 module.exports = GameService;
 
 /***/ }),
+/* 132 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var PositionService = function () {
+    function PositionService() {
+        _classCallCheck(this, PositionService);
+    }
+
+    _createClass(PositionService, null, [{
+        key: "moveToPointer",
+
+
+        /**
+         * @param displayObject
+         * @param speed
+         * @param pointer
+         * @param maxTime
+         * @returns {*|number}
+         */
+        value: function moveToPointer(displayObject, speed, pointer, maxTime) {
+
+            var angle = PositionService.angleToPointer(displayObject, pointer);
+
+            if (maxTime > 0) {
+                //  We know how many pixels we need to move, but how fast?
+                speed = PositionService.distanceToPointer(displayObject, pointer) / (maxTime / 1000);
+            }
+
+            displayObject.body.velocity.x = Math.cos(angle) * speed;
+            displayObject.body.velocity.y = Math.sin(angle) * speed;
+
+            return angle;
+        }
+    }, {
+        key: "moveToPointerPos",
+        value: function moveToPointerPos(displayObject, speed, pointer) {
+            var angle = PositionService.angleToPointerPos(displayObject, pointer);
+
+            displayObject.body.velocity.x = Math.cos(angle) * speed;
+            displayObject.body.velocity.y = Math.sin(angle) * speed;
+
+            return angle;
+        }
+
+        /**
+         * @param displayObject
+         * @param pointer
+         * @param world
+         * @returns {number}
+         */
+
+    }, {
+        key: "distanceToPointer",
+        value: function distanceToPointer(displayObject, pointer, world) {
+
+            if (world === undefined) {
+                world = false;
+            }
+
+            var dx = world ? displayObject.world.x - pointer.worldX : displayObject.x - pointer.worldX;
+            var dy = world ? displayObject.world.y - pointer.worldY : displayObject.y - pointer.worldY;
+
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        /**
+         * @param displayObject
+         * @param pointer
+         * @param world
+         * @returns {number}
+         */
+
+    }, {
+        key: "angleToPointer",
+        value: function angleToPointer(displayObject, pointer, world) {
+
+            if (world === undefined) {
+                world = false;
+            }
+
+            if (world) {
+                return Math.atan2(pointer.worldY - displayObject.world.y, pointer.worldX - displayObject.world.x);
+            }
+
+            return Math.atan2(pointer.worldY - displayObject.y, pointer.worldX - displayObject.x);
+        }
+
+        /**
+         *
+         * @param displayObject
+         * @param pointer
+         * @returns {number}
+         */
+
+    }, {
+        key: "angleToPointerPos",
+        value: function angleToPointerPos(displayObject, pointer) {
+            return Math.atan2(pointer.y - displayObject.y, pointer.x - displayObject.x);
+        }
+    }]);
+
+    return PositionService;
+}();
+
+module.exports = PositionService;
+
+/***/ }),
 /* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -29987,14 +29955,14 @@ var Player = function () {
         //     }
         // }, this);
 
-        this.debugPlayer = game.engine.add.graphics(data.x, data.y);
-
-        // set a fill and line style
-        this.debugPlayer.beginFill(0xff0000);
-        this.debugPlayer.lineStyle(data.shield, data.color, 0.5);
-        this.debugPlayer.drawCircle(0, 0, this.radius * 2);
-        this.debugPlayer.endFill();
-        this.debugPlayer.anchor.setTo(0.5, 0.5);
+        // this.debugPlayer = game.engine.add.graphics(data.x, data.y);
+        //
+        // // set a fill and line style
+        // this.debugPlayer.beginFill(0xff0000);
+        // this.debugPlayer.lineStyle(data.shield, data.color, 0.5);
+        // this.debugPlayer.drawCircle(0, 0, this.radius * 2);
+        // this.debugPlayer.endFill();
+        // this.debugPlayer.anchor.setTo(0.5, 0.5);
     }
 
     _createClass(Player, [{
