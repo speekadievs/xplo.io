@@ -52,6 +52,7 @@ class GameService {
         this.shield_box = null;
         this.mine_box = null;
         this.grenade_box = null;
+        this.score_box = null;
         this.rank_box = null;
         this.ping_box = null;
 
@@ -328,17 +329,36 @@ class GameService {
             this.grenade_box.text.boundsAlignV = 'middle';
             this.grenade_box.text.boundsAlignH = 'center';
 
+            //Create score box
+            this.score_box = this.engine.add.group();
+            this.score_box.fixedToCamera = true;
+            this.score_box.cameraOffset.setTo(20, (window.innerHeight) - 60);
+
+            let scoreBox = this.engine.add.graphics(0, 0, this.score_box);
+            scoreBox.beginFill(0x000000);
+            scoreBox.drawRoundedRect(0, 0, 120, 40, 5);
+            scoreBox.alpha = 0.5;
+
+            this.score_box.text = this.engine.add.text(0, 0, '', {
+                font: "15px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.score_box);
+            this.score_box.text.setTextBounds(10, 5, 120, 40);
+            this.score_box.text.boundsAlignV = 'middle';
+            this.score_box.text.boundsAlignH = 'left';
+
             //Create rank box
             this.rank_box = this.engine.add.group();
             this.rank_box.fixedToCamera = true;
-            this.rank_box.cameraOffset.setTo(20, (window.innerHeight) - 60);
+            this.rank_box.cameraOffset.setTo(160, (window.innerHeight) - 60);
 
             let rankBox = this.engine.add.graphics(0, 0, this.rank_box);
             rankBox.beginFill(0x000000);
             rankBox.drawRoundedRect(0, 0, 120, 40, 5);
             rankBox.alpha = 0.5;
 
-            this.rank_box.text = this.engine.add.text(0, 0, '', {
+            this.rank_box.text = this.engine.add.text(0, 0, 'Rank: 0', {
                 font: "15px Arial",
                 fill: "#ffffff",
                 align: "center"
@@ -350,7 +370,7 @@ class GameService {
             //Create ping box
             this.ping_box = this.engine.add.group();
             this.ping_box.fixedToCamera = true;
-            this.ping_box.cameraOffset.setTo(160, (window.innerHeight) - 60);
+            this.ping_box.cameraOffset.setTo(300, (window.innerHeight) - 60);
 
             let pingBox = this.engine.add.graphics(0, 0, this.ping_box);
             pingBox.beginFill(0x000000);
@@ -914,6 +934,9 @@ class GameService {
         let y = object.item.position.y;
 
         object.item.kill();
+        if (object.red_dot) {
+            object.red_dot.kill();
+        }
 
         this.launchExplosion(x, y);
 
@@ -1106,7 +1129,9 @@ class GameService {
             this.leaderboard['line_' + (key + 1) + '_right'].setText(leader.score);
         });
 
-        this.rank_box.text.setText('Score: ' + data.score);
+        this.score_box.text.setText('Score: ' + data.score);
+
+        this.rank_box.text.setText('Rank: '+data.rank);
     }
 
     onChangeLeader(data) {
@@ -1121,7 +1146,7 @@ class GameService {
                 enemy.resetMap(this);
             })
         } else {
-            player.resetMap();
+            player.resetMap(this);
 
             this.enemies.forEach(enemy => {
                 if (enemy.id === data.id) {
@@ -1319,6 +1344,7 @@ class GameService {
 
         this.mine_list.forEach(item => {
             item.item.destroy();
+            item.red_dot.destroy();
         });
         this.mine_list = [];
 

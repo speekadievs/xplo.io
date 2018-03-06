@@ -71,6 +71,18 @@ class Player {
         this.player.body.addCircle((this.body_size + (this.shield / 2)), 0, 0);
         this.player.body.data.shapes[0].sensor = true;
 
+        this.player.body.onBeginContact.add((body, bodyB, shapeA, shapeB, equation) => {
+            let key = body.sprite.id;
+            let type = body.sprite.type;
+
+            if (type === 'shield-pickup' || type === 'mine-pickup' || type === 'grenade-pickup') {
+                game.socket.emit('food-pickup', {
+                    id: key
+                });
+
+                game.engine.add.tween(body.sprite).to( { alpha: 0 }, 500, Phaser.Easing.Linear.None, true, 0);
+            }
+        }, this);
 
 
         this.debugPlayer = false;

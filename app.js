@@ -1092,6 +1092,57 @@ if (cluster.isMaster) {
             movePlayer.last_move = (new Date()).getTime();
         });
 
+        socket.on('food-pickup', function (data) {
+            let player = game.findPlayer(this.id);
+            let object = game.findItem(data.id);
+
+            if (typeof player.body === 'undefined') {
+                return false;
+            }
+
+            let distance = PositionService.distanceToPointer(player, {
+                worldX: object.x,
+                worldY: object.y
+            });
+
+            if (distance > 170) {
+                game.log('Distance to item too large, possible hack', 'error');
+                return false;
+            }
+
+            if (object.type === 'shield-pickup') {
+                if (!player.old_decrease_shield) {
+                    if (player.shield < game.properties.max_shield) {
+                        player.shield += 1;
+
+                        game.resizable_bodies.push(player.id);
+                    }
+                }
+            } else if (object.type === 'mine-pickup') {
+                object.user_id = player.id;
+                player.mines.push(object);
+
+                socket.emit("mine-picked-up", {
+                    object: object
+                });
+            } else if (object.type === 'grenade-pickup') {
+                object.user_id = player.id;
+                player.grenades.push(object);
+
+                socket.emit("grenade-picked-up", {
+                    object: object
+                });
+            }
+
+            player.score++;
+
+            game.food_list.splice(game.findItem(object.id, true), 1);
+
+            game.io.to(game.mode).emit('item-remove', object);
+
+            game.checkLeader(player);
+        });
+
         socket.on('drop-mine', function (data) {
             if (typeof data.id === 'undefined') {
                 game.log('Corrupted data in drop-mine event - ' + JSON.stringify(data));
@@ -1206,9 +1257,19 @@ if (cluster.isMaster) {
                 }
             }
 
+            let rank = 0;
+            let playerIndex = _.findIndex(sortedPlayers, (sortedPlayer) => {
+                return sortedPlayer.id === player.id;
+            });
+
+            if (playerIndex !== -1) {
+                rank = playerIndex + 1;
+            }
+
             this.emit('get-leaderboard', {
                 leaders: leaders,
-                score: player.score
+                score: player.score,
+                rank: rank
             });
         });
 

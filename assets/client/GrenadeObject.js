@@ -22,7 +22,7 @@ class GrenadeObject {
         graphics.endFill();
         graphics.anchor.setTo(0.5, 0.5);
 
-        this.item = engine.add.sprite(this.posx, this.posy, graphics.generateTexture());
+        this.item = engine.add.sprite(this.posx, this.posy, graphics.generateTexture(1, PIXI.scaleModes.LINEAR));
 
         this.item.type = 'grenade';
         this.item.id = id;

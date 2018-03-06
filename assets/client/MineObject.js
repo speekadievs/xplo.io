@@ -17,12 +17,25 @@ class MineObject {
         graphics.lineStyle(line_size, color, 0.5);
         graphics.drawCircle(0, 0, size);
         graphics.endFill();
-        graphics.beginFill(0xff0000);
-        graphics.drawCircle(0, 0, 5);
-        graphics.endFill();
+        // graphics.beginFill(0xff0000);
+        // graphics.drawCircle(0, 0, 5);
+        // graphics.endFill();
         graphics.anchor.setTo(0.5, 0.5);
 
-        this.item = engine.add.sprite(this.posx, this.posy, graphics.generateTexture());
+        let redDot = engine.add.graphics(startx, starty);
+        redDot.beginFill(0xff0000);
+        redDot.drawCircle(0, 0, 5);
+        redDot.endFill();
+
+        this.item = engine.add.sprite(this.posx, this.posy, graphics.generateTexture(1, PIXI.scaleModes.LINEAR));
+        this.item.anchor.setTo(0.5, 0.5);
+
+        this.red_dot = engine.add.sprite(this.posx, this.posy, redDot.generateTexture(1, PIXI.scaleModes.LINEAR));
+        this.red_dot.anchor.setTo(0.5, 0.5);
+
+        //this.item.addChild(this.red_dot);
+
+        engine.add.tween(this.red_dot).to({alpha: 0}, 200, Phaser.Easing.Linear.None, true, 0, 1000, true);
 
         this.item.type = 'mine';
         this.item.id = id;
@@ -36,6 +49,7 @@ class MineObject {
         this.item.body.data.shapes[0].sensor = true;
 
         graphics.destroy();
+        redDot.destroy();
     }
 }
 
