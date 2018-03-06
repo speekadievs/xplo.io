@@ -26,6 +26,7 @@ class RemotePlayer {
         this.player.type = "player_body";
         this.player.id = this.id;
         this.player.shield = shield;
+        this.shield = shield;
 
         this.god_mode = null;
         if (is_god) {

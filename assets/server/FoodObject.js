@@ -24,7 +24,7 @@ class FoodObject {
         this.shape = null;
         this.world = game.world;
 
-        this.createBody();
+        //this.createBody();
     }
 
     createBody() {

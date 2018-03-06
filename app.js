@@ -293,11 +293,6 @@ if (cluster.isMaster) {
 
                         game.resizable_bodies.push(player.id);
 
-                        socket.emit("gained", {
-                            new_size: player.size,
-                            new_shield: player.shield
-                        });
-
                     } else if (buff.type === 'shield_decrease') {
                         let oppositeBuff = _.findIndex(player.buffs, (activeBuff) => {
                             return activeBuff.user_id === player.id && activeBuff.type === 'shield_increase'
@@ -322,10 +317,6 @@ if (cluster.isMaster) {
 
                         game.resizable_bodies.push(player.id);
 
-                        socket.emit("gained", {
-                            new_size: player.size,
-                            new_shield: player.shield
-                        });
                     } else if (buff.type === 'speed_increase') {
                         let oppositeBuff = _.findIndex(player.buffs, (activeBuff) => {
                             return activeBuff.type === 'speed_decrease'
@@ -341,7 +332,7 @@ if (cluster.isMaster) {
                             });
                         }
 
-                        player.speed = player.speed + 300;
+                        player.speed = player.speed + 200;
 
                     } else if (buff.type === 'speed_decrease') {
                         let oppositeBuff = _.findIndex(player.buffs, (activeBuff) => {
@@ -429,11 +420,6 @@ if (cluster.isMaster) {
 
                                 game.resizable_bodies.push(player.id);
                             }
-
-                            socket.emit("gained", {
-                                new_size: player.size,
-                                new_shield: player.shield
-                            });
                         }
                     } else if (object.type === 'mine-pickup') {
                         object.user_id = player.id;
@@ -1087,19 +1073,6 @@ if (cluster.isMaster) {
                 return false;
             }
 
-            //when sendData is true, we send the data back to client.
-            if (!movePlayer.sendData) {
-                return false;
-            }
-
-            //every 50ms, we send the data.
-            setTimeout(() => {
-                movePlayer.sendData = true
-            }, 50);
-
-            //we set sendData to false when we send the data.
-            movePlayer.sendData = false;
-
             //Make a new pointer with the new inputs from the client.
             //contains player positions in server
             let serverPointer = {
@@ -1116,57 +1089,58 @@ if (cluster.isMaster) {
                 movePlayer.body.angle = PositionService.moveToPointer(movePlayer, movePlayer.speed, serverPointer);
             }
 
-            let x = movePlayer.body.position[0];
-            let y = movePlayer.body.position[1];
-
-            let radius = movePlayer.size + (movePlayer.shield / 2);
-
-            if (x <= (1000 + radius)) {
-                movePlayer.body.position[0] = 1000 + radius;
-            }
-
-            if (y <= (1000 + radius)) {
-                movePlayer.body.position[1] = 1000 + radius;
-            }
-
-            if (x >= (game.properties.height - radius)) {
-                movePlayer.body.position[0] = game.properties.height - radius;
-            }
-
-            if (y >= (game.properties.width - radius)) {
-                movePlayer.body.position[1] = game.properties.width - radius;
-            }
-
-            movePlayer.x = movePlayer.body.position[0];
-            movePlayer.y = movePlayer.body.position[1];
-
-            //new player position to be sent back to client.
-            let info = {
-                x: movePlayer.body.position[0],
-                y: movePlayer.body.position[1],
-                angle: movePlayer.body.angle,
-                speed: movePlayer.speed,
-                ts: data.ts
-            };
-
-            //send to sender (not to every clients).
-            this.emit('input-received', info);
-
-            //data to be sent back to everyone except sender
-            let moveplayerData = {
-                id: movePlayer.id,
-                x: movePlayer.body.position[0],
-                y: movePlayer.body.position[1],
-                angle: movePlayer.body.angle,
-                size: movePlayer.size,
-                shield: movePlayer.shield,
-                speed: movePlayer.speed
-            };
-
-            //send to everyone except sender
-            this.to(game.mode).broadcast.emit('enemy-move', moveplayerData);
-
             movePlayer.last_move = (new Date()).getTime();
+        });
+
+        socket.on('food-pickup', function (data) {
+            let player = game.findPlayer(this.id);
+            let object = game.findItem(data.id);
+
+            if (typeof player.body === 'undefined') {
+                return false;
+            }
+
+            let distance = PositionService.distanceToPointer(player, {
+                worldX: object.x,
+                worldY: object.y
+            });
+
+            if (distance > 170) {
+                game.log('Distance to item too large, possible hack', 'error');
+                return false;
+            }
+
+            if (object.type === 'shield-pickup') {
+                if (!player.old_decrease_shield) {
+                    if (player.shield < game.properties.max_shield) {
+                        player.shield += 1;
+
+                        game.resizable_bodies.push(player.id);
+                    }
+                }
+            } else if (object.type === 'mine-pickup') {
+                object.user_id = player.id;
+                player.mines.push(object);
+
+                socket.emit("mine-picked-up", {
+                    object: object
+                });
+            } else if (object.type === 'grenade-pickup') {
+                object.user_id = player.id;
+                player.grenades.push(object);
+
+                socket.emit("grenade-picked-up", {
+                    object: object
+                });
+            }
+
+            player.score++;
+
+            game.food_list.splice(game.findItem(object.id, true), 1);
+
+            game.io.to(game.mode).emit('item-remove', object);
+
+            game.checkLeader(player);
         });
 
         socket.on('drop-mine', function (data) {
@@ -1283,9 +1257,19 @@ if (cluster.isMaster) {
                 }
             }
 
+            let rank = 0;
+            let playerIndex = _.findIndex(sortedPlayers, (sortedPlayer) => {
+                return sortedPlayer.id === player.id;
+            });
+
+            if (playerIndex !== -1) {
+                rank = playerIndex + 1;
+            }
+
             this.emit('get-leaderboard', {
                 leaders: leaders,
-                score: player.score
+                score: player.score,
+                rank: rank
             });
         });
 

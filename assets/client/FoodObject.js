@@ -18,7 +18,7 @@ class FoodObject {
         graphics.endFill();
         graphics.anchor.setTo(0.5, 0.5);
 
-        this.item = game.engine.add.sprite(this.posx, this.posy, graphics.generateTexture(), game.item_group);
+        this.item = game.engine.add.sprite(this.posx, this.posy, graphics.generateTexture(1, PIXI.scaleModes.LINEAR), game.item_group);
 
         this.item.alpha = 0;
 

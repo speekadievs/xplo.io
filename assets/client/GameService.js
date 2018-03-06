@@ -52,7 +52,9 @@ class GameService {
         this.shield_box = null;
         this.mine_box = null;
         this.grenade_box = null;
+        this.score_box = null;
         this.rank_box = null;
+        this.ping_box = null;
 
         this.buffs = {
             shield_increase: null,
@@ -83,6 +85,9 @@ class GameService {
         };
 
         this.last_moves = [];
+
+        this.latency = 0;
+        this.latency_iteration = 0;
     }
 
     onConnected() {
@@ -105,7 +110,7 @@ class GameService {
         this.map_group = this.engine.add.group();
 
         this.map_group.fixedToCamera = true;
-        this.map_group.cameraOffset.setTo((window.innerWidth * window.devicePixelRatio) - 220, (window.innerHeight * window.devicePixelRatio) - 220);
+        this.map_group.cameraOffset.setTo((window.innerWidth) - 220, (window.innerHeight) - 220);
 
         let map = this.engine.add.graphics(0, 0, this.map_group);
 
@@ -324,17 +329,36 @@ class GameService {
             this.grenade_box.text.boundsAlignV = 'middle';
             this.grenade_box.text.boundsAlignH = 'center';
 
+            //Create score box
+            this.score_box = this.engine.add.group();
+            this.score_box.fixedToCamera = true;
+            this.score_box.cameraOffset.setTo(20, (window.innerHeight) - 60);
+
+            let scoreBox = this.engine.add.graphics(0, 0, this.score_box);
+            scoreBox.beginFill(0x000000);
+            scoreBox.drawRoundedRect(0, 0, 120, 40, 5);
+            scoreBox.alpha = 0.5;
+
+            this.score_box.text = this.engine.add.text(0, 0, '', {
+                font: "15px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.score_box);
+            this.score_box.text.setTextBounds(10, 5, 120, 40);
+            this.score_box.text.boundsAlignV = 'middle';
+            this.score_box.text.boundsAlignH = 'left';
+
             //Create rank box
             this.rank_box = this.engine.add.group();
             this.rank_box.fixedToCamera = true;
-            this.rank_box.cameraOffset.setTo(20, (window.innerHeight * window.devicePixelRatio) - 60);
+            this.rank_box.cameraOffset.setTo(160, (window.innerHeight) - 60);
 
             let rankBox = this.engine.add.graphics(0, 0, this.rank_box);
             rankBox.beginFill(0x000000);
             rankBox.drawRoundedRect(0, 0, 120, 40, 5);
             rankBox.alpha = 0.5;
 
-            this.rank_box.text = this.engine.add.text(0, 0, '', {
+            this.rank_box.text = this.engine.add.text(0, 0, 'Rank: 0', {
                 font: "15px Arial",
                 fill: "#ffffff",
                 align: "center"
@@ -342,6 +366,25 @@ class GameService {
             this.rank_box.text.setTextBounds(10, 5, 120, 40);
             this.rank_box.text.boundsAlignV = 'middle';
             this.rank_box.text.boundsAlignH = 'left';
+
+            //Create ping box
+            this.ping_box = this.engine.add.group();
+            this.ping_box.fixedToCamera = true;
+            this.ping_box.cameraOffset.setTo(300, (window.innerHeight) - 60);
+
+            let pingBox = this.engine.add.graphics(0, 0, this.ping_box);
+            pingBox.beginFill(0x000000);
+            pingBox.drawRoundedRect(0, 0, 120, 40, 5);
+            pingBox.alpha = 0.5;
+
+            this.ping_box.text = this.engine.add.text(0, 0, 'Latency: 0', {
+                font: "15px Arial",
+                fill: "#ffffff",
+                align: "center"
+            }, this.ping_box);
+            this.ping_box.text.setTextBounds(10, 5, 120, 40);
+            this.ping_box.text.boundsAlignV = 'middle';
+            this.ping_box.text.boundsAlignH = 'left';
 
             this.createLeaderboard(data);
 
@@ -351,7 +394,7 @@ class GameService {
                 //Create red score
                 this.red_score = this.engine.add.group();
                 this.red_score.fixedToCamera = true;
-                this.red_score.cameraOffset.setTo(((window.innerWidth * window.devicePixelRatio) / 2) - 125, 20);
+                this.red_score.cameraOffset.setTo(((window.innerWidth) / 2) - 125, 20);
 
                 let redScore = this.engine.add.graphics(0, 0, this.red_score);
                 redScore.beginFill(0xbe0000);
@@ -370,7 +413,7 @@ class GameService {
                 //Create match timer
                 this.match_time = this.engine.add.group();
                 this.match_time.fixedToCamera = true;
-                this.match_time.cameraOffset.setTo(((window.innerWidth * window.devicePixelRatio) / 2) - 35, 20);
+                this.match_time.cameraOffset.setTo(((window.innerWidth) / 2) - 35, 20);
 
                 let matchTime = this.engine.add.graphics(0, 0, this.match_time);
                 matchTime.beginFill(0x000000);
@@ -389,7 +432,7 @@ class GameService {
                 //Create blue score
                 this.blue_score = this.engine.add.group();
                 this.blue_score.fixedToCamera = true;
-                this.blue_score.cameraOffset.setTo(((window.innerWidth * window.devicePixelRatio) / 2) + 55, 20);
+                this.blue_score.cameraOffset.setTo(((window.innerWidth) / 2) + 55, 20);
 
                 let blueScore = this.engine.add.graphics(0, 0, this.blue_score);
                 blueScore.beginFill(0x0000FF);
@@ -478,6 +521,16 @@ class GameService {
 
     onPong() {
         this.latency = (new Date()).getTime() - this.ping_time;
+
+        if (this.latency_iteration >= 120) {
+            if (this.ping_box) {
+                this.ping_box.text.setText('Latency: ' + this.latency);
+            }
+
+            this.latency_iteration = 0;
+        }
+
+        this.latency_iteration++;
     }
 
     createLeaderboard(data) {
@@ -812,40 +865,49 @@ class GameService {
         }
     }
 
-    onInputReceived(data) {
+    onUpdateState(data) {
+        data.forEach((remotePlayer) => {
+            let localPlayer = null;
+            if (remotePlayer.id === player.id) {
+                localPlayer = player;
+            } else {
+                localPlayer = this.findPlayer(remotePlayer.id)
+            }
 
-        //we're forming a new pointer with the new position
-        let newPointer = {
-            x: data.x,
-            y: data.y,
-            worldX: data.x,
-            worldY: data.y,
-        };
+            //we're forming a new pointer with the new position
+            let newPointer = {
+                x: remotePlayer.x,
+                y: remotePlayer.y,
+                worldX: remotePlayer.x,
+                worldY: remotePlayer.y,
+            };
 
-        let distance = PositionService.distanceToPointer(player.player, newPointer);
-        let speed = distance / 0.06;
+            let distance = PositionService.distanceToPointer(localPlayer.player, newPointer);
+            let speed = distance / 0.05;
 
-        player.rotation = PositionService.moveToPointer(player.player, speed, newPointer);
+            localPlayer.rotation = PositionService.moveToPointer(localPlayer.player, speed, newPointer);
 
-        if (this.map_group) {
-            player.map.x = (player.player.x / (this.properties.server_width / 220)) - 20;
-            player.map.y = (player.player.y / (this.properties.server_height / 220)) - 20;
-        }
-    }
+            if (this.map_group) {
+                localPlayer.map.x = (localPlayer.player.x / (this.properties.server_width / 220)) - 20;
+                localPlayer.map.y = (localPlayer.player.y / (this.properties.server_height / 220)) - 20;
+            }
 
-    onGained(data) {
-        player.shield = data.new_shield;
+            if (remotePlayer.shield !== localPlayer.shield) {
+                localPlayer.size = remotePlayer.size;
+                localPlayer.shield = remotePlayer.shield;
 
-        player.player.graphicsData[0].lineWidth = data.new_shield;
+                localPlayer.player.graphicsData[0].lineWidth = remotePlayer.shield;
 
-        //create new body
-        player.player.body.clearShapes();
-        player.player.body.addCircle((player.body_size + (player.shield / 2)), 0, 0);
-        player.player.body.data.shapes[0].sensor = true;
+                localPlayer.player.body.clearShapes();
+                localPlayer.player.body.addCircle((localPlayer.size + (localPlayer.shield / 2)), 0, 0);
+                localPlayer.player.body.data.shapes[0].sensor = true;
 
-        let percent = ((data.new_shield - 10) * 100) / (player.max_shield - 10);
-
-        this.shield_box.text.setText(Math.round(percent) + '%');
+                if (remotePlayer.id === player.id) {
+                    let percent = ((localPlayer.shield - 10) * 100) / (player.max_shield - 10);
+                    this.shield_box.text.setText(Math.round(percent) + '%');
+                }
+            }
+        });
     }
 
     onExplosion(data) {
@@ -872,6 +934,9 @@ class GameService {
         let y = object.item.position.y;
 
         object.item.kill();
+        if (object.red_dot) {
+            object.red_dot.kill();
+        }
 
         this.launchExplosion(x, y);
 
@@ -883,12 +948,6 @@ class GameService {
             this.mine_list.splice(this.mine_list.indexOf(object), 1);
         } else {
             this.grenade_list.splice(this.grenade_list.indexOf(object), 1);
-        }
-
-        if (typeof data.user_id !== 'undefined') {
-            if (data.user_id === player.id) {
-                this.onGained(data);
-            }
         }
     }
 
@@ -1070,7 +1129,9 @@ class GameService {
             this.leaderboard['line_' + (key + 1) + '_right'].setText(leader.score);
         });
 
-        this.rank_box.text.setText('Score: ' + data.score);
+        this.score_box.text.setText('Score: ' + data.score);
+
+        this.rank_box.text.setText('Rank: '+data.rank);
     }
 
     onChangeLeader(data) {
@@ -1085,7 +1146,7 @@ class GameService {
                 enemy.resetMap(this);
             })
         } else {
-            player.resetMap();
+            player.resetMap(this);
 
             this.enemies.forEach(enemy => {
                 if (enemy.id === data.id) {
@@ -1283,6 +1344,7 @@ class GameService {
 
         this.mine_list.forEach(item => {
             item.item.destroy();
+            item.red_dot.destroy();
         });
         this.mine_list = [];
 

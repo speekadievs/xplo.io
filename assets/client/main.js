@@ -5,7 +5,7 @@ window.moment = require('moment');
 
 let skinModal = jQuery('#skins');
 skins.forEach(skin => {
-    skinModal.find('.modal-body').append('<div class="skin-container"><a href="#" data-id="' + skin + '" class="skin"><i class="sprite sprite-'+skin+'"></i></a></div>');
+    skinModal.find('.modal-body').append('<div class="skin-container"><a href="#" data-id="' + skin + '" class="skin"><i class="sprite sprite-' + skin + '"></i></a></div>');
 });
 
 // Do some front-end stuff
@@ -27,6 +27,7 @@ const customParser = require('socket.io-msgpack-parser');
 
 let UtilService = require('../UtilService.js');
 let GameService = require('./GameService.js');
+let PositionService = require('./PositionService.js');
 
 window.chooseRegion = function (region) {
     jQuery('#choose-region').hide();
@@ -34,7 +35,14 @@ window.chooseRegion = function (region) {
 
     let socket;
 
-    if (window.location.href.indexOf('xplo.io') !== -1) {
+    console.log(window.location.href, window.location.href.indexOf('staging'));
+    if (window.location.href.indexOf('staging') !== -1) {
+        socket = io({
+            transports: ['websocket'],
+            parser: customParser,
+            upgrade: false
+        });
+    } else if (window.location.href.indexOf('xplo.io') !== -1) {
         socket = io('http://' + region + '.xplo.io', {
             transports: ['websocket'],
             parser: customParser,
@@ -152,8 +160,8 @@ window.chooseRegion = function (region) {
                     });
 
                     //when the player receives the new input
-                    socket.on('input-received', function (data) {
-                        game.onInputReceived(data);
+                    socket.on('update-state', function (data) {
+                        game.onUpdateState(data);
                     });
 
                     //when the player gets killed
@@ -291,66 +299,29 @@ window.chooseRegion = function (region) {
 
                 //move the player when the player is made
                 if (game.properties.in_game) {
-
                     //we're making a new mouse pointer and sending this input to
                     //the server.
                     let pointer = engine.input.activePointer;
 
-                    let ts = Date.now();
-
-                    //Send a new position data to the server
-                    socket.emit('move-pointer', {
-                        pointer_x: pointer.x,
-                        pointer_y: pointer.y,
-                        pointer_worldx: pointer.worldX,
-                        pointer_worldy: pointer.worldY,
-                        ts: ts
-                    });
-
-                    let newPointer = {
-                        x: pointer.worldX,
-                        y: pointer.worldY,
-                        worldX: pointer.worldX,
-                        worldY: pointer.worldY,
-                        ts: ts
-                    };
-
                     if (player) {
-                        // let PositionService = require('./PositionService.js');
-                        //
-                        // if (PositionService.distanceToPointer(player.player, newPointer) <= 30) {
-                        //     player.rotation = PositionService.moveToPointer(player.player, 0, newPointer, 100);
-                        // } else {
-                        //     player.rotation = PositionService.moveToPointer(player.player, player.speed - game.latency, newPointer);
-                        // }
-                        //
-                        // if (player.player.body.x <= (1000 + player.initial_size + (player.shield / 2))) {
-                        //     player.player.body.x = 1000 + player.initial_size + (player.shield / 2);
-                        // }
-                        //
-                        // if (player.player.body.y <= (1000 + player.initial_size + (player.shield / 2))) {
-                        //     player.player.body.y = 1000 + player.initial_size + (player.shield / 2);
-                        // }
-                        //
-                        // if (player.player.body.x >= (game.properties.server_height - (player.initial_size + (player.shield / 2)))) {
-                        //     player.player.body.x = game.properties.server_height - (player.initial_size + (player.shield / 2));
-                        // }
-                        //
-                        // if (player.player.body.y >= (game.properties.server_width - (player.initial_size + (player.shield / 2)))) {
-                        //     player.player.body.y = game.properties.server_width - (player.initial_size + (player.shield / 2));
-                        // }
-                        //
-                        // newPointer.player_x = player.player.body.x;
-                        // newPointer.player_y = player.player.body.y;
-                        //
-                        // // add the move to a history of most recent 30 moves
-                        // game.last_moves.push(newPointer);
-                        // while (game.last_moves.length > 30) {
-                        //     game.last_moves.shift()
-                        // }
-                    }
+                        if (typeof player.pointer_x === 'undefined') {
+                            player.pointer_x = 0;
+                            player.pointer_y = 0;
+                        }
 
-                    if (player) {
+                        if ((player.pointer_x !== pointer.screenX || player.pointer_y !== pointer.screenY) || (player.pointer_x !== pointer.screenX && player.pointer_y !== pointer.screenY)) {
+                            player.pointer_x = pointer.screenX;
+                            player.pointer_y = pointer.screenY;
+
+                            //Send a new position data to the server
+                            socket.emit('move-pointer', {
+                                pointer_x: pointer.x,
+                                pointer_y: pointer.y,
+                                pointer_worldx: pointer.worldX,
+                                pointer_worldy: pointer.worldY
+                            });
+                        }
+
                         player.updateTextPos();
                     }
 
